@@ -1,3 +1,4 @@
+import type { TUnsafe } from "@eoussama/core";
 import type {
   TDim,
   TFireguardConfig,
@@ -6,7 +7,6 @@ import type {
   TFiremittOptions,
   TPos,
   TTheme,
-  TUnsafe,
 } from "..";
 import {
   InvalidAppNameError,

@@ -37,6 +37,9 @@
     "doc": "pnpm exec typedoc && cp assets/favicon.ico doc/",
     "prod": "pnpm audit && pnpm lint && pnpm build && pnpm test"
   },
+  "dependencies": {
+    "@eoussama/core": "^0.0.4"
+  },
   "devDependencies": {
     "@eoussama/dx": "^0.0.4",
     "jest": "^30.4.2",

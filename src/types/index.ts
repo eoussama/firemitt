@@ -6,8 +6,6 @@ export * from "./fireguard-options.type";
 export * from "./firemitt-config.type";
 export * from "./firemitt-options.type";
 export * from "./message.type";
-export * from "./nullable.type";
 export * from "./pos.type";
 export * from "./theme.type";
 export * from "./token.type";
-export * from "./unsafe.type";
