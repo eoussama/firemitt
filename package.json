@@ -25,7 +25,13 @@
     "firebase-auth"
   ],
   "main": "firemitt.es.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
+    "prepublishOnly": "pnpm build",
     "dev": "vite",
     "test": "pnpm exec jest",
     "preview": "vite preview",
