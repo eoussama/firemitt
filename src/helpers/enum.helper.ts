@@ -5,14 +5,12 @@ import type { TUnsafe } from "@eoussama/core";
 /**
  * @category Helpers
  *
- * @description
  * Helps with enums.
  *
  * @class EnumHelper
  */
 export class EnumHelper {
   /**
-   * @description
    * Returns the name for an enum value.
    *
    * @param enumType The enumurator.

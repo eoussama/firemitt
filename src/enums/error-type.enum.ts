@@ -1,13 +1,11 @@
 /**
  * @category Firemitt
  *
- * @description
  * Enumeration representing error names.
  */
 export enum ErrorType {
 
   /**
-   * @description
    * Invalid URL error.
    *
    * {@link InvalidURLError}
@@ -15,7 +13,6 @@ export enum ErrorType {
   InvalidURL = 1,
 
   /**
-   * @description
    * Invalid app error.
    *
    * {@link InvalidAppError}
@@ -23,7 +20,6 @@ export enum ErrorType {
   InvalidApp = 2,
 
   /**
-   * @description
    * Invalid app name error.
    *
    * {@link InvalidAppNameError}
@@ -31,7 +27,6 @@ export enum ErrorType {
   InvalidAppName = 3,
 
   /**
-   * @description
    * Invalid provider error.
    *
    * {@link InvalidProviderError}
@@ -39,7 +34,6 @@ export enum ErrorType {
   InvalidProvider = 4,
 
   /**
-   * @description
    * Invalid Firebase config error.
    *
    * {@link InvalidFirebaseConfigError}

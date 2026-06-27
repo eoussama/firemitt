@@ -1,7 +1,6 @@
 /**
  * @category Fireguard
  *
- * @description
  * Defines the color types used in the application.
  * This type specifies the standard colors that can be used, typically for theming or UI elements.
  *
