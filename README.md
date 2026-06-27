@@ -101,6 +101,8 @@ FiremittHelper.auth(options)
 
 > You can point `url` at the hosted Fireguard instance (`https://ouss.es/fireguard`) or your own [self-hosted](https://github.com/EOussama/fireguard) deployment.
 
+> **Note:** Firebase only allows sign-in popups from authorized domains. If you are using a self-hosted Fireguard deployment, add its domain to the authorized domains list in the Firebase Console under **Authentication → Settings → Authorized domains**. Skipping this step will cause the authentication popup to be blocked.
+
 ### Configuration
 
 #### `TFiremittOptions`
