@@ -7,7 +7,7 @@ export default defineConfig({
   build: {
     lib: {
       name: 'Firemitt',
-      entry: resolve(__dirname, 'src/index.ts'),
+      entry: resolve(import.meta.dirname, 'src/index.ts'),
       fileName: format => `firemitt.${format}.js`
     },
     minify: true,

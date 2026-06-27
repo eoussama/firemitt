@@ -26,7 +26,7 @@ export class BaseError extends Error implements IError {
     super(message);
 
     this.type = type;
-    this.name = `${EnumHelper.getName(ErrorType, type)}Error` ?? 'BaseError';
+    this.name = `${EnumHelper.getName(ErrorType, type) ?? 'Base'}Error`;
   }
 
   /**
