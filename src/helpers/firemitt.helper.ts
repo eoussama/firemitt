@@ -30,13 +30,32 @@ export class FiremittHelper {
     const win = window.open(config.url, "_blank", flags) as Window;
 
     return new Promise((resolve, reject) => {
-      if (EventHelper.init(win)) {
-        EventHelper.on(EventType.Loaded, () => {
-          EventHelper.send(EventType.Config, config.fireguard)
-            .on<{ token: string }>(EventType.AuthSucceded, data => resolve(data!.token))
-            .on<{ error: string }>(EventType.AuthFailed, data => reject(data!.error));
-        });
+      if (!EventHelper.init(win)) {
+        return;
       }
+
+      let settled = false;
+
+      const handleLoaded = () => {
+        EventHelper
+          .send(EventType.Config, config.fireguard)
+          .on<{ token: string }>(EventType.AuthSucceded, (data) => {
+            if (!settled) {
+              settled = true;
+              resolve(data!.token);
+            }
+          })
+          .on<{ error: string }>(EventType.AuthFailed, (data) => {
+            if (!settled) {
+              settled = true;
+              reject(data!.error);
+            }
+          });
+
+        EventHelper.on(EventType.Loaded, handleLoaded);
+      };
+
+      EventHelper.on(EventType.Loaded, handleLoaded);
     });
   }
 }

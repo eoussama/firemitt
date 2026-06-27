@@ -76,5 +76,55 @@ describe("tests FiremittHelper", () => {
 
       expect(globalThis.window.addEventListener).not.toHaveBeenCalled();
     });
+
+    it("should ignore AuthSucceded after already settled via AuthFailed", async () => {
+      const authPromise = FiremittHelper.auth(BASE_OPTIONS);
+
+      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
+
+      const failMsg = Base64helper.encode({ type: EventType.AuthFailed, payload: { error: "first_error" } });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: failMsg } as MessageEvent));
+
+      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "late-token" } });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
+
+      await expect(authPromise).rejects.toBe("first_error");
+    });
+
+    it("should ignore AuthFailed after already settled via AuthSucceded", async () => {
+      const authPromise = FiremittHelper.auth(BASE_OPTIONS);
+
+      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
+
+      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "auth-token-123" } });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
+
+      const failMsg = Base64helper.encode({ type: EventType.AuthFailed, payload: { error: "late_error" } });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: failMsg } as MessageEvent));
+
+      await expect(authPromise).resolves.toBe("auth-token-123");
+    });
+
+    it("should resolve with token on successful authentication after retry", async () => {
+      const authPromise = FiremittHelper.auth(BASE_OPTIONS);
+
+      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
+
+      const failMsg = Base64helper.encode({ type: EventType.AuthFailed, payload: { error: "auth_error" } });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: failMsg } as MessageEvent));
+
+      await expect(authPromise).rejects.toBe("auth_error");
+    });
   });
 });
