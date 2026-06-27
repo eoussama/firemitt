@@ -1,72 +1,75 @@
-const firemitt = require('../dist/firemitt.umd');
+const firemitt = require("../dist/firemitt.umd");
 
 
-describe('ConfigHelper', () => {
+
+describe("configHelper", () => {
   beforeAll(() => {
-    global.window = Object.create({});
+    globalThis.window = Object.create({});
 
-    Object.defineProperty(window, 'screen', {
+    Object.defineProperty(window, "screen", {
       value: {
         width: 1024,
-        height: 768
-      }
+        height: 768,
+      },
     });
   });
 
-  describe('init', () => {
-    test('should initialize a valid TFiremittConfig object', () => {
+  describe("init", () => {
+    it("should initialize a valid TFiremittConfig object", () => {
       const options = {
-        url: 'https://fireguard-instance.com',
+        url: "https://fireguard-instance.com",
         dim: { width: 500, height: 300 },
         pos: { x: 100, y: 200 },
         config: {
-          name: 'MyApp',
-          firebase: { apiKey: '123' }
-        }
+          name: "MyApp",
+          firebase: { apiKey: "123" },
+        },
       };
 
       const config = firemitt.ConfigHelper.init(options);
 
-      expect(config.url).toBe('https://fireguard-instance.com/');
+      expect(config.url).toBe("https://fireguard-instance.com/");
       expect(config.dim).toEqual({ width: 500, height: 300 });
       expect(config.pos).toEqual({ x: 100, y: 200 });
-      expect(config.fireguard.name).toBe('MyApp');
+      expect(config.fireguard.name).toBe("MyApp");
     });
 
-    test('should throw InvalidURLError for invalid URL', () => {
-      const options = { url: 'invalid-url' };
+    it("should throw InvalidURLError for invalid URL", () => {
+      const options = { url: "invalid-url" };
+
       expect(() => firemitt.ConfigHelper.init(options)).toThrow(firemitt.InvalidURLError);
     });
 
-    test('should throw InvalidAppNameError for absent name', () => {
-      const options = { url: 'https://fireguard-instance.com' };
+    it("should throw InvalidAppNameError for absent name", () => {
+      const options = { url: "https://fireguard-instance.com" };
+
       expect(() => firemitt.ConfigHelper.init(options)).toThrow(firemitt.InvalidAppNameError);
     });
 
-    test('should throw InvalidFirebaseConfigError for Firebase config', () => {
+    it("should throw InvalidFirebaseConfigError for Firebase config", () => {
       const options = {
-        url: 'https://fireguard-instance.com',
+        url: "https://fireguard-instance.com",
         config: {
-          name: 'MyApp',
-          firebase: {}
-        }
+          name: "MyApp",
+          firebase: {},
+        },
       };
 
       expect(() => firemitt.ConfigHelper.init(options)).toThrow(firemitt.InvalidFirebaseConfigError);
     });
   });
 
-  describe('getFlags', () => {
-    test('should return a correctly formatted string of window feature flags', () => {
+  describe("getFlags", () => {
+    it("should return a correctly formatted string of window feature flags", () => {
       const config = {
         dim: { width: 400, height: 600 },
         pos: { x: 150, y: 250 },
-        fireguard: {}
+        fireguard: {},
       };
 
       const flags = firemitt.ConfigHelper.getFlags(config);
 
-      expect(flags).toBe('width=400,height=600,left=150,top=250');
+      expect(flags).toBe("width=400,height=600,left=150,top=250");
     });
   });
 });

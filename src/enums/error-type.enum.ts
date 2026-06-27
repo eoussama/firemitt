@@ -44,5 +44,5 @@ export enum ErrorType {
    *
    * {@link InvalidFirebaseConfigError}
    */
-  InvalidFirebaseConfig = 5
+  InvalidFirebaseConfig = 5,
 }

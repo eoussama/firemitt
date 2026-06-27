@@ -1,5 +1,8 @@
-import { ErrorType } from '..';
-import { BaseError } from './base.error';
+import { ErrorType } from "..";
+
+import { BaseError } from "./base.error";
+
+
 
 /**
  * @category Errors
@@ -10,13 +13,12 @@ import { BaseError } from './base.error';
  * This error is thrown when there is an issue with the provided Firebase configuration.
  */
 export class InvalidFirebaseConfigError extends BaseError {
-
   /**
    * @description
    * Creates a new instance of the InvalidFirebaseConfigError class with a default error message.
    * The default error message indicates that Firebase initialization failed due to an invalid configuration.
    */
   constructor() {
-    super(ErrorType.InvalidFirebaseConfig, 'Invalid Firebase configuration');
+    super(ErrorType.InvalidFirebaseConfig, "Invalid Firebase configuration");
   }
 }

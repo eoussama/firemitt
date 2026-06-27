@@ -28,5 +28,5 @@ export enum EventType {
    * @description
    * Indicates a failed authentication event.
    */
-  AuthFailed
+  AuthFailed,
 }

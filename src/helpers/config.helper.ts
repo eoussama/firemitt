@@ -1,42 +1,45 @@
-import {
-  TPos,
+import type {
   TDim,
-  TTheme,
-  TUnsafe,
-  TFiremittConfig,
-  TFiremittOptions,
   TFireguardConfig,
   TFireguardOptions,
-  InvalidURLError,
+  TFiremittConfig,
+  TFiremittOptions,
+  TPos,
+  TTheme,
+  TUnsafe,
+} from "..";
+import {
   InvalidAppNameError,
-  InvalidFirebaseConfigError
-} from '..';
+  InvalidFirebaseConfigError,
+  InvalidURLError,
+} from "..";
+
+
 
 /**
  * @category Helpers
  *
  * @description
  * Helper class for configuring Firemitt and Fireguard settings.
- * 
+ *
  * This class provides static methods to construct and validate configuration objects for Firemitt and Fireguard.
  * It handles dimensions, positions, URLs, and Fireguard specific configurations including theme and Firebase settings.
- * 
+ *
  * @class ConfigHelper
  */
 export class ConfigHelper {
-
   /**
    * @description
    * Creates a `TDim` object representing dimensions, ensuring valid numeric values.
-   * 
+   *
    * @static
    * @param {TUnsafe<number>} width - Potentially undefined or null width value.
    * @param {TUnsafe<number>} height - Potentially undefined or null height value.
    * @returns {TDim} The dimensions object with width and height.
    */
   private static getDim(width: TUnsafe<number>, height: TUnsafe<number>): TDim {
-    const w = parseFloat((width ?? 450).toString());
-    const h = parseFloat((height ?? 260).toString());
+    const w = Number.parseFloat((width ?? 450).toString());
+    const h = Number.parseFloat((height ?? 260).toString());
 
     return { width: w, height: h };
   }
@@ -44,7 +47,7 @@ export class ConfigHelper {
   /**
    * @description
    * Generates a `TPos` object representing the position, using default values if necessary.
-   * 
+   *
    * @static
    * @param {TUnsafe<number>} x - Potentially undefined or null x-coordinate.
    * @param {TUnsafe<number>} y - Potentially undefined or null y-coordinate.
@@ -52,8 +55,8 @@ export class ConfigHelper {
    * @returns {TPos} The position object with x and y coordinates.
    */
   private static getPos(x: TUnsafe<number>, y: TUnsafe<number>, width: number): TPos {
-    const top = parseFloat((y ?? 50).toString());
-    const left = parseFloat((x ?? (window.screen.width / 2 - width / 2)).toString());
+    const top = Number.parseFloat((y ?? 50).toString());
+    const left = Number.parseFloat((x ?? (window.screen.width / 2 - width / 2)).toString());
 
     return { x: left, y: top };
   }
@@ -61,7 +64,7 @@ export class ConfigHelper {
   /**
    * @description
    * Validates and returns a URL string, throwing an error if invalid.
-   * 
+   *
    * @static
    * @param {TUnsafe<string>} url - The potentially undefined or null URL.
    * @returns {string} The validated URL string.
@@ -69,14 +72,15 @@ export class ConfigHelper {
    */
   private static getURL(url: TUnsafe<string>): string {
     try {
-      const fireguardURL = new URL(url ?? '');
+      const fireguardURL = new URL(url ?? "");
 
-      if (fireguardURL.protocol !== 'http:' && fireguardURL.protocol !== 'https:') {
-        throw Error();
+      if (fireguardURL.protocol !== "http:" && fireguardURL.protocol !== "https:") {
+        throw new Error("Invalid protocol");
       }
 
       return fireguardURL.toString();
-    } catch (_) {
+    }
+    catch {
       throw new InvalidURLError();
     }
   }
@@ -84,7 +88,7 @@ export class ConfigHelper {
   /**
    * @description
    * Creates a `TFireguardConfig` object from partial options, with fallbacks for theme and Firebase configurations.
-   * 
+   *
    * @static
    * @param {TUnsafe<Partial<TFireguardOptions>>} config - The potentially undefined or null Fireguard configuration options.
    * @param {Partial<TTheme>} [fallbackTheme] - Optional fallback theme settings.
@@ -93,27 +97,32 @@ export class ConfigHelper {
    * @throws {InvalidFirebaseConfigError} If the Firebase configuration is invalid.
    */
   private static getFireguardConfig(config: TUnsafe<Partial<TFireguardOptions>>, fallbackTheme?: Partial<TTheme>): TFireguardConfig {
-    const name = config?.name ?? '';
-    const logo = config?.logo ?? '';
+    const name = config?.name ?? "";
+    const logo = config?.logo ?? "";
 
     const theme = {
-      text: config?.theme?.text || fallbackTheme?.text || '#1a3544',
-      primary: config?.theme?.primary || fallbackTheme?.primary || '#ffe536',
-      secondary: config?.theme?.secondary || fallbackTheme?.secondary || '#1a3544'
+      text: config?.theme?.text || fallbackTheme?.text || "#1a3544",
+      primary: config?.theme?.primary || fallbackTheme?.primary || "#ffe536",
+      secondary: config?.theme?.secondary || fallbackTheme?.secondary || "#1a3544",
     };
 
     const firebase = config?.firebase ?? {
-      apiKey: config?.firebase?.apiKey ?? '',
-      appId: config?.firebase?.appId ?? '',
-      projectId: config?.firebase?.projectId ?? '',
-      authDomain: config?.firebase?.authDomain ?? '',
-      measurementId: config?.firebase?.measurementId ?? '',
-      storageBucket: config?.firebase?.storageBucket ?? '',
-      messagingSenderId: config?.firebase?.messagingSenderId ?? ''
+      apiKey: config?.firebase?.apiKey ?? "",
+      appId: config?.firebase?.appId ?? "",
+      projectId: config?.firebase?.projectId ?? "",
+      authDomain: config?.firebase?.authDomain ?? "",
+      measurementId: config?.firebase?.measurementId ?? "",
+      storageBucket: config?.firebase?.storageBucket ?? "",
+      messagingSenderId: config?.firebase?.messagingSenderId ?? "",
     };
 
-    if (name.length === 0) throw new InvalidAppNameError();
-    if (Object.keys(firebase).length === 0) throw new InvalidFirebaseConfigError();
+    if (name.length === 0) {
+      throw new InvalidAppNameError();
+    }
+
+    if (Object.keys(firebase).length === 0) {
+      throw new InvalidFirebaseConfigError();
+    }
 
     return { name, logo, theme, firebase };
   }
@@ -121,7 +130,7 @@ export class ConfigHelper {
   /**
    * @description
    * Initializes and returns a `TFiremittConfig` object based on the provided Firemitt options.
-   * 
+   *
    * @static
    * @param {TFiremittOptions} options - The Firemitt options to initialize the configuration.
    * @returns {TFiremittConfig} The initialized Firemitt configuration object.
@@ -132,13 +141,13 @@ export class ConfigHelper {
     const pos = this.getPos(options?.pos?.x, options?.pos?.y, dim.width);
     const config = this.getFireguardConfig(options?.config);
 
-    return { url, dim, pos, fireguard: config }
+    return { url, dim, pos, fireguard: config };
   }
 
   /**
    * @description
    * Constructs a string representing window features (flags) for window.open based on the given Firemitt configuration.
-   * 
+   *
    * @static
    * @param {TFiremittConfig} config - The Firemitt configuration object.
    * @returns {string} A string of window feature flags for use in window.open.
@@ -148,9 +157,9 @@ export class ConfigHelper {
       `width=${config.dim.width}`,
       `height=${config.dim.height}`,
       `left=${config.pos.x}`,
-      `top=${config.pos.y}`
+      `top=${config.pos.y}`,
     ];
 
-    return flags.join(',');
+    return flags.join(",");
   }
 }

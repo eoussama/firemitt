@@ -1,4 +1,6 @@
-import { TDim, TFireguardOptions, TPos } from '.';
+import type { TDim, TFireguardOptions, TPos } from ".";
+
+
 
 /**
  * @category Firemitt
@@ -6,7 +8,7 @@ import { TDim, TFireguardOptions, TPos } from '.';
  * @description
  * Options for configuring Firemitt.
  * This type outlines the optional and partial settings that can be applied to customize the Firemitt.
- * 
+ *
  * @type {TFiremittOptions}
  */
 export type TFiremittOptions = {
@@ -15,24 +17,24 @@ export type TFiremittOptions = {
    * @description
    * The URL associated with the Firemitt.
    */
-  url: string
+  url: string;
 } & Partial<{
 
   /**
    * @description
    * Optional, partial position configuration.
    */
-  pos: Partial<TPos>
+  pos: Partial<TPos>;
 
   /**
    * @description
    * Optional, partial dimension configuration.
    */
-  dim: Partial<TDim>
+  dim: Partial<TDim>;
 
   /**
    * @description
    * Optional, partial Fireguard configuration.
    */
-  config: Partial<TFireguardOptions>
-}>
+  config: Partial<TFireguardOptions>;
+}>;

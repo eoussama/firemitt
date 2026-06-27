@@ -1,5 +1,8 @@
-import { ErrorType } from '..';
-import { BaseError } from './base.error';
+import { ErrorType } from "..";
+
+import { BaseError } from "./base.error";
+
+
 
 /**
  * @category Errors
@@ -9,7 +12,6 @@ import { BaseError } from './base.error';
  * This error is thrown when an operation expects a valid provider name, but an invalid one is provided.
  */
 export class InvalidProviderError extends BaseError {
-
   /**
    * @description
    * Creates a ne0w instance of the InvalidProviderError class with a specific error message.

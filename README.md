@@ -40,19 +40,19 @@ The `FiremittHelper.auth` method is the cornerstone of the `Firemitt` package. I
 Here's a basic example of how to use it:
 
 ```ts
-import { FiremittHelper } from 'firemitt';
+import { FiremittHelper } from "firemitt";
 
 const options = {
 
   // You can use either this or replace the URL with a self-hosted Fireguard instance.
-  url: 'https://ouss.es/fireguard',
-  
+  url: "https://ouss.es/fireguard",
+
   // Optional
   pos: {
     y: 50,
     x: (window.screen.width / 2) - 500
   },
-  
+
   // Optional
   dim: {
     width: 450,
@@ -60,37 +60,37 @@ const options = {
   },
 
   fireguard: {
-    name: 'My App Name',
+    name: "My App Name",
 
     // Optional
-    logo: 'https://url/to/your/logo/image',
+    logo: "https://url/to/your/logo/image",
 
     // Optional
     theme: {
-      text: 'grey',
-      primary: '#ee16cc',
-      secondary: '#ff12ee'
-    }
-    
+      text: "grey",
+      primary: "#ee16cc",
+      secondary: "#ff12ee"
+    },
+
     // Your web app's Firebase configuration
     firebase: {
-      appId: '',
-      apiKey: '',
-      projectId: '',
-      authDomain: '',
-      measurementId: '',
-      storageBucket: '',
-      messagingSenderId: ''
+      appId: "",
+      apiKey: "",
+      projectId: "",
+      authDomain: "",
+      measurementId: "",
+      storageBucket: "",
+      messagingSenderId: ""
     }
   }
-}
+};
 
 FiremittHelper.auth(options)
-  .then(token => {
-    console.log('Authentication successful!', token);
+  .then((token) => {
+    console.log("Authentication successful!", token); // eslint-disable-line no-console
   })
-  .catch(error => {
-    console.error('Authentication failed:', error);
+  .catch((error) => {
+    console.error("Authentication failed:", error);
   });
 ```
 

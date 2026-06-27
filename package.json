@@ -1,23 +1,16 @@
 {
-  "type": "module",
   "name": "@eoussama/firemitt",
+  "type": "module",
   "version": "0.1.6",
-  "license": "Apache-2.0",
-  "main": "firemitt.es.js",
   "packageManager": "pnpm@11.9.0",
-  "homepage": "https://ouss.es/firemitt",
   "description": "Yes, fireguards are hot, but not enough to burn. Intermediate package that facilitates working with Fireguard.",
   "author": {
     "name": "eoussama",
     "url": "https://ouss.es",
     "email": "oussama.essamadi@gmail.com"
   },
-  "keywords": [
-    "auth",
-    "firebase",
-    "fireguard",
-    "firebase-auth"
-  ],
+  "license": "Apache-2.0",
+  "homepage": "https://ouss.es/firemitt",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/eoussama/firemitt.git"
@@ -25,16 +18,27 @@
   "bugs": {
     "url": "https://github.com/eoussama/firemitt/issues"
   },
+  "keywords": [
+    "auth",
+    "firebase",
+    "fireguard",
+    "firebase-auth"
+  ],
+  "main": "firemitt.es.js",
   "scripts": {
     "dev": "vite",
     "test": "pnpm exec jest",
     "preview": "vite preview",
     "clean": "rm -rf dist pkg",
     "build": "tsc && vite build",
+    "lint": "dx lint",
+    "lint:fix": "dx lint --fix",
     "package": "./scripts/package.sh",
-    "doc": "pnpm exec typedoc && cp assets/favicon.ico doc/"
+    "doc": "pnpm exec typedoc && cp assets/favicon.ico doc/",
+    "prod": "pnpm audit && pnpm lint && pnpm build && pnpm test"
   },
   "devDependencies": {
+    "@eoussama/dx": "^0.0.4",
     "jest": "^30.4.2",
     "typedoc": "^0.28.19",
     "typedoc-material-theme": "^1.4.1",
