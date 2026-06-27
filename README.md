@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="100" src="https://raw.githubusercontent.com/EOussama/firemitt/main/assets/firemitt.svg">
+  <img width="100" src="https://raw.githubusercontent.com/EOussama/firemitt/main/assets/logo.svg">
 </p>
 
 <h1 align="center">Firemitt</h1>
