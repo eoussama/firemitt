@@ -5,7 +5,7 @@ import dts from "vite-plugin-dts";
 
 
 export default defineConfig({
-  plugins: [dts({ copyDtsFiles: true })],
+  plugins: [dts({ include: ["src"] })],
   test: {
     globals: true,
     environment: "node",
@@ -32,7 +32,6 @@ export default defineConfig({
       entry: resolve(import.meta.dirname, "src/index.ts"),
       fileName: format => `firemitt.${format}.js`,
     },
-    sourcemap: true,
     minify: true,
     emptyOutDir: true,
   },
