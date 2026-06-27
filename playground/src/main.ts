@@ -130,6 +130,7 @@ async function runAuth(): Promise<void> {
   }
   catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+
     setResult("error", message);
   }
 }

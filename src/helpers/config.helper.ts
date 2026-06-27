@@ -8,6 +8,9 @@ import type {
   TPos,
 } from "..";
 import {
+  FirebaseConfigSchema,
+  FireguardOptionsSchema,
+  FiremittOptionsSchema,
   InvalidAppNameError,
   InvalidFirebaseConfigError,
   InvalidURLError,
@@ -63,18 +66,13 @@ export class ConfigHelper {
    * @throws {InvalidURLError} If the URL is invalid.
    */
   private static getURL(url: TUnsafe<string>): string {
-    try {
-      const fireguardURL = new URL(url ?? "");
+    const result = FiremittOptionsSchema.shape.url.safeParse(url ?? "");
 
-      if (fireguardURL.protocol !== "http:" && fireguardURL.protocol !== "https:") {
-        throw new Error("Invalid protocol");
-      }
-
-      return fireguardURL.toString();
-    }
-    catch {
+    if (!result.success) {
       throw new InvalidURLError();
     }
+
+    return new URL(result.data).toString();
   }
 
   /**
@@ -105,11 +103,15 @@ export class ConfigHelper {
       messagingSenderId: "",
     };
 
-    if (name.length === 0) {
+    const nameResult = FireguardOptionsSchema.shape.name.safeParse(name);
+
+    if (!nameResult.success) {
       throw new InvalidAppNameError();
     }
 
-    if (Object.keys(firebase).length === 0) {
+    const firebaseResult = FirebaseConfigSchema.safeParse(firebase);
+
+    if (!firebaseResult.success) {
       throw new InvalidFirebaseConfigError();
     }
 

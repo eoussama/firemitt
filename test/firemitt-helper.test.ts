@@ -1,5 +1,6 @@
 import { vi } from "vitest";
 import { Base64helper, EventType, FiremittHelper } from "../src/index.ts";
+import { VALID_FIREBASE } from "./fixtures.ts";
 
 
 
@@ -7,7 +8,7 @@ const BASE_OPTIONS = {
   url: "https://fireguard-instance.com",
   config: {
     name: "TestApp",
-    firebase: { apiKey: "test-key", appId: "", projectId: "", authDomain: "", measurementId: "", storageBucket: "", messagingSenderId: "" },
+    firebase: VALID_FIREBASE,
   },
 };
 

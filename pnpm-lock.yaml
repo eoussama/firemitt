@@ -16,6 +16,9 @@ importers:
       '@eoussama/core':
         specifier: ^0.0.4
         version: 0.0.4(@typescript-eslint/rule-tester@8.62.0(eslint@9.39.4)(typescript@6.0.3))(@typescript-eslint/typescript-estree@8.62.0(typescript@6.0.3))(@typescript-eslint/utils@8.62.0(eslint@9.39.4)(typescript@6.0.3))(@vue/compiler-sfc@3.5.39)(typescript@6.0.3)(vitest@4.1.9)
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@eoussama/dx':
         specifier: ^0.0.4
@@ -2219,6 +2222,9 @@ packages:
     resolution: {integrity: sha512-D7eujBWkLa3p2sIpJA0d1pr7es+a7m0vFAnZLlCEKq/Ij2k0MLi9Br2UPxoxdYystm5K1yeBGzub0FlYUEWj2Q==}
     engines: {node: '>=8.0.0'}
     hasBin: true
+
+  zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -4609,5 +4615,7 @@ snapshots:
     optionalDependencies:
       commander: 9.5.0
     optional: true
+
+  zod@4.4.3: {}
 
   zwitch@2.0.4: {}

@@ -4,6 +4,7 @@ import {
   InvalidFirebaseConfigError,
   InvalidURLError,
 } from "../src/index.ts";
+import { VALID_FIREBASE } from "./fixtures.ts";
 
 
 
@@ -22,7 +23,7 @@ describe("configHelper", () => {
         url: "https://fireguard-instance.com",
         dim: { width: 500, height: 300 },
         pos: { x: 100, y: 200 },
-        config: { name: "MyApp", firebase: { apiKey: "123", appId: "", projectId: "", authDomain: "", measurementId: "", storageBucket: "", messagingSenderId: "" } },
+        config: { name: "MyApp", firebase: VALID_FIREBASE },
       });
 
       expect(config.url).toBe("https://fireguard-instance.com/");
@@ -55,7 +56,12 @@ describe("configHelper", () => {
         url: "https://fireguard-instance.com/",
         dim: { width: 400, height: 600 },
         pos: { x: 150, y: 250 },
-        fireguard: { name: "", logo: "", theme: { text: "", primary: "", secondary: "" }, firebase: { apiKey: "", appId: "", projectId: "", authDomain: "", measurementId: "", storageBucket: "", messagingSenderId: "" } },
+        fireguard: {
+          name: "App",
+          logo: "",
+          theme: { text: "#1a3544", primary: "#ffe536", secondary: "#1a3544" },
+          firebase: VALID_FIREBASE,
+        },
       });
 
       expect(flags).toBe("width=400,height=600,left=150,top=250");
