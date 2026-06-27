@@ -169,8 +169,8 @@ function setActiveScenario(active: HTMLButtonElement): void {
 function buildUrlPresets(): void {
   const presets = [
     { label: "Hosted", value: DEFAULT_FIREGUARD_URL },
-    { label: "localhost:3000", value: "http://localhost:3000" },
-    { label: "localhost:4000", value: "http://localhost:4000" },
+    { label: "localhost:5173", value: "http://localhost:5173" },
+    { label: "localhost:5174", value: "http://localhost:5174" },
     { label: "localhost:8080", value: "http://localhost:8080" },
   ];
 
