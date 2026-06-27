@@ -19,7 +19,7 @@
 </p>
 
 ## Description
-Firemitt is an intermediate package designed to simplify and streamline the integration process with [Fireguard](https://github.com/EOussama/fireguard) (A firebase middleman app). It offers a suite of helper methods and classes to manage configurations, events, and authentication in a more efficient and less error-prone way. This package is particularly useful for developers working with [Fireguard](https://github.com/EOussama/fireguard) authentication processes and event handling in web applications. Specifially ones under the manifest v3 restrictions.
+Firemitt is an intermediate package designed to simplify and streamline the integration process with [Fireguard](https://github.com/EOussama/fireguard) (A firebase middleman app). It offers a suite of helper methods and classes to manage configurations, events, and authentication in a more efficient and less error-prone way. This package is particularly useful for developers working with [Fireguard](https://github.com/EOussama/fireguard) authentication processes and event handling in web applications. Specifically ones under the manifest v3 restrictions.
 
 ## Features
 * **Simplified Authentication**: The `FiremittHelper.auth` method abstracts the complexities of authentication, making it straightforward to implement.
@@ -28,7 +28,7 @@ Firemitt is an intermediate package designed to simplify and streamline the inte
 
 ## Installation
 ```sh
-npm install firemitt
+pnpm add @eoussama/firemitt
 ```
 
 ## Usage
@@ -40,7 +40,7 @@ The `FiremittHelper.auth` method is the cornerstone of the `Firemitt` package. I
 Here's a basic example of how to use it:
 
 ```ts
-import { FiremittHelper } from "firemitt";
+import { FiremittHelper } from "@eoussama/firemitt";
 
 const options = {
 
@@ -59,7 +59,7 @@ const options = {
     height: 260
   },
 
-  fireguard: {
+  config: {
     name: "My App Name",
 
     // Optional

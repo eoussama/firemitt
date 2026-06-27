@@ -52,7 +52,7 @@
     "lint:fix": "dx lint --fix",
     "package": "./scripts/package.sh",
     "doc": "pnpm exec typedoc && cp assets/favicon.ico doc/",
-    "prod": "pnpm audit && pnpm lint && pnpm build && pnpm test && pnpm coverage"
+    "prod": "pnpm audit && pnpm lint && pnpm build && pnpm test && pnpm coverage && pnpm doc"
   },
   "dependencies": {
     "@eoussama/core": "^0.0.4"
