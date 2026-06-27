@@ -1,4 +1,4 @@
-import { ConfigHelper, InvalidFirebaseConfigError, InvalidURLError } from "../src/index.ts";
+import { ConfigHelper, InvalidDimError, InvalidFirebaseConfigError, InvalidURLError } from "../src/index.ts";
 import { VALID_FIREBASE } from "./fixtures.ts";
 
 
@@ -69,5 +69,35 @@ describe("tests ConfigHelper branch coverage", () => {
         config: { name: "App" },
       }),
     ).toThrow(InvalidFirebaseConfigError);
+  });
+
+  it("should throw InvalidDimError when width is NaN", () => {
+    expect(() =>
+      ConfigHelper.init({
+        url: "https://fireguard-instance.com",
+        dim: { width: Number.NaN },
+        config: { name: "App", firebase: VALID_FIREBASE },
+      }),
+    ).toThrow(InvalidDimError);
+  });
+
+  it("should throw InvalidDimError when height is NaN", () => {
+    expect(() =>
+      ConfigHelper.init({
+        url: "https://fireguard-instance.com",
+        dim: { height: Number.NaN },
+        config: { name: "App", firebase: VALID_FIREBASE },
+      }),
+    ).toThrow(InvalidDimError);
+  });
+
+  it("should use provided dim values when valid", () => {
+    const config = ConfigHelper.init({
+      url: "https://fireguard-instance.com",
+      dim: { width: 800, height: 600 },
+      config: { name: "App", firebase: VALID_FIREBASE },
+    });
+
+    expect(config.dim).toEqual({ width: 800, height: 600 });
   });
 });

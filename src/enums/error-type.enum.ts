@@ -39,4 +39,11 @@ export enum ErrorType {
    * {@link InvalidFirebaseConfigError}
    */
   InvalidFirebaseConfig = 5,
+
+  /**
+   * Invalid dimension error.
+   *
+   * {@link InvalidDimError}
+   */
+  InvalidDim = 6,
 }
