@@ -43,7 +43,7 @@
   "scripts": {
     "prepublishOnly": "pnpm build",
     "dev": "vite",
-    "sandbox": "vite --config playground/vite.config.js",
+    "playground": "vite --config playground/vite.config.js",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "preview": "vite preview",
