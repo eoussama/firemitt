@@ -1,18 +1,18 @@
-const {
+import {
   BaseError,
   ErrorType,
-  InvalidURLError,
   InvalidAppError,
   InvalidAppNameError,
-  InvalidProviderError,
   InvalidFirebaseConfigError,
-} = require("../dist/firemitt.umd");
+  InvalidProviderError,
+  InvalidURLError,
+} from "../src/index.ts";
 
 
 
 describe("tests BaseError", () => {
   it("should fall back to 'Base' name when type has no matching enum key", () => {
-    const error = new BaseError(999, "unknown error");
+    const error = new BaseError(999 as ErrorType, "unknown error");
 
     expect(error.name).toBe("BaseError");
     expect(error.toString()).toBe("[BaseError] unknown error.");

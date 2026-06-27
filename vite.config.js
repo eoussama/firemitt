@@ -6,6 +6,25 @@ import dts from "vite-plugin-dts";
 
 export default defineConfig({
   plugins: [dts({ copyDtsFiles: true })],
+  test: {
+    globals: true,
+    environment: "node",
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.ts"],
+      exclude: [
+        "src/**/index.ts",
+        "src/types/**",
+        "src/interfaces/**",
+      ],
+      thresholds: {
+        branches: 100,
+        functions: 100,
+        lines: 100,
+        statements: 100,
+      },
+    },
+  },
   build: {
     lib: {
       name: "Firemitt",

@@ -1,10 +1,10 @@
-const { ConfigHelper, InvalidURLError } = require("../dist/firemitt.umd");
+import { ConfigHelper, InvalidURLError } from "../src/index.ts";
 
 
 
 describe("tests ConfigHelper branch coverage", () => {
   beforeAll(() => {
-    globalThis.window = Object.create({});
+    globalThis.window = Object.create({}) as Window & typeof globalThis;
 
     Object.defineProperty(window, "screen", {
       value: { width: 1024, height: 768 },
@@ -14,7 +14,7 @@ describe("tests ConfigHelper branch coverage", () => {
   it("should use default dim when width and height are not provided", () => {
     const config = ConfigHelper.init({
       url: "https://fireguard-instance.com",
-      config: { name: "App", firebase: { apiKey: "key" } },
+      config: { name: "App", firebase: { apiKey: "key", appId: "", projectId: "", authDomain: "", measurementId: "", storageBucket: "", messagingSenderId: "" } },
     });
 
     expect(config.dim).toEqual({ width: 450, height: 260 });
@@ -23,7 +23,7 @@ describe("tests ConfigHelper branch coverage", () => {
   it("should use default pos when x and y are not provided", () => {
     const config = ConfigHelper.init({
       url: "https://fireguard-instance.com",
-      config: { name: "App", firebase: { apiKey: "key" } },
+      config: { name: "App", firebase: { apiKey: "key", appId: "", projectId: "", authDomain: "", measurementId: "", storageBucket: "", messagingSenderId: "" } },
     });
 
     expect(typeof config.pos.x).toBe("number");
@@ -31,20 +31,18 @@ describe("tests ConfigHelper branch coverage", () => {
   });
 
   it("should throw InvalidURLError when url is null or undefined", () => {
-    expect(() => ConfigHelper.init({ url: null })).toThrow(InvalidURLError);
-    expect(() => ConfigHelper.init({ url: undefined })).toThrow(InvalidURLError);
+    expect(() => ConfigHelper.init({ url: null as unknown as string })).toThrow(InvalidURLError);
+    expect(() => ConfigHelper.init({ url: undefined as unknown as string })).toThrow(InvalidURLError);
   });
 
   it("should throw InvalidURLError for a URL with a non-http/s protocol", () => {
-    expect(() =>
-      ConfigHelper.init({ url: "ftp://fireguard-instance.com" }),
-    ).toThrow(InvalidURLError);
+    expect(() => ConfigHelper.init({ url: "ftp://fireguard-instance.com" })).toThrow(InvalidURLError);
   });
 
   it("should accept http:// URLs", () => {
     const config = ConfigHelper.init({
       url: "http://fireguard-instance.com",
-      config: { name: "App", firebase: { apiKey: "key" } },
+      config: { name: "App", firebase: { apiKey: "key", appId: "", projectId: "", authDomain: "", measurementId: "", storageBucket: "", messagingSenderId: "" } },
     });
 
     expect(config.url).toBe("http://fireguard-instance.com/");
@@ -55,7 +53,7 @@ describe("tests ConfigHelper branch coverage", () => {
       url: "https://fireguard-instance.com",
       config: {
         name: "App",
-        firebase: { apiKey: "key" },
+        firebase: { apiKey: "key", appId: "", projectId: "", authDomain: "", measurementId: "", storageBucket: "", messagingSenderId: "" },
         theme: { text: "red", primary: "blue", secondary: "green" },
       },
     });

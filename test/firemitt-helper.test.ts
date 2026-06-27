@@ -1,4 +1,5 @@
-const { FiremittHelper, EventType, Base64helper } = require("../dist/firemitt.umd");
+import { vi } from "vitest";
+import { Base64helper, EventType, FiremittHelper } from "../src/index.ts";
 
 
 
@@ -6,26 +7,26 @@ const BASE_OPTIONS = {
   url: "https://fireguard-instance.com",
   config: {
     name: "TestApp",
-    firebase: { apiKey: "test-key" },
+    firebase: { apiKey: "test-key", appId: "", projectId: "", authDomain: "", measurementId: "", storageBucket: "", messagingSenderId: "" },
   },
 };
 
 describe("tests FiremittHelper", () => {
-  let messageListeners;
-  let mockWin;
+  let messageListeners: Array<(e: MessageEvent) => void>;
+  let mockWin: { postMessage: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     messageListeners = [];
-    mockWin = { postMessage: jest.fn() };
+    mockWin = { postMessage: vi.fn() };
 
     globalThis.window = {
-      open: jest.fn(() => mockWin),
+      open: vi.fn(() => mockWin),
       screen: { width: 1024 },
-      addEventListener: jest.fn((event, handler) => {
+      addEventListener: vi.fn((_, handler: (e: MessageEvent) => void) => {
         messageListeners.push(handler);
       }),
-      removeEventListener: jest.fn(),
-    };
+      removeEventListener: vi.fn(),
+    } as unknown as Window & typeof globalThis;
   });
 
   describe("auth", () => {
@@ -34,11 +35,11 @@ describe("tests FiremittHelper", () => {
 
       const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
 
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg }));
+      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
 
       const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "auth-token-123" } });
 
-      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg }));
+      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
 
       await expect(authPromise).resolves.toBe("auth-token-123");
     });
@@ -48,11 +49,11 @@ describe("tests FiremittHelper", () => {
 
       const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
 
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg }));
+      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
 
       const failMsg = Base64helper.encode({ type: EventType.AuthFailed, payload: { error: "auth_error" } });
 
-      messageListeners.forEach(h => h({ isTrusted: true, data: failMsg }));
+      messageListeners.forEach(h => h({ isTrusted: true, data: failMsg } as MessageEvent));
 
       await expect(authPromise).rejects.toBe("auth_error");
     });
@@ -60,11 +61,19 @@ describe("tests FiremittHelper", () => {
     it("should open a popup window with the correct URL", () => {
       FiremittHelper.auth(BASE_OPTIONS);
 
-      expect(globalThis.window.open).toHaveBeenCalledWith(
+      expect((globalThis.window as unknown as { open: ReturnType<typeof vi.fn> }).open).toHaveBeenCalledWith(
         "https://fireguard-instance.com/",
         "_blank",
         expect.any(String),
       );
+    });
+
+    it("should not set up event listeners when the popup fails to open", () => {
+      (globalThis.window as unknown as { open: ReturnType<typeof vi.fn> }).open = vi.fn(() => null);
+
+      FiremittHelper.auth(BASE_OPTIONS);
+
+      expect(globalThis.window.addEventListener).not.toHaveBeenCalled();
     });
   });
 });

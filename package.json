@@ -33,8 +33,8 @@
   "scripts": {
     "prepublishOnly": "pnpm build",
     "dev": "vite",
-    "test": "pnpm exec jest",
-    "coverage": "pnpm exec jest --coverage",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
     "preview": "vite preview",
     "clean": "rm -rf dist pkg",
     "build": "tsc && vite build",
@@ -44,27 +44,17 @@
     "doc": "pnpm exec typedoc && cp assets/favicon.ico doc/",
     "prod": "pnpm audit && pnpm lint && pnpm build && pnpm test && pnpm coverage"
   },
-  "jest": {
-    "coverageProvider": "v8",
-    "coverageThreshold": {
-      "global": {
-        "branches": 100,
-        "functions": 100,
-        "lines": 100,
-        "statements": 100
-      }
-    }
-  },
   "dependencies": {
     "@eoussama/core": "^0.0.4"
   },
   "devDependencies": {
     "@eoussama/dx": "^0.0.4",
-    "jest": "^30.4.2",
+    "@vitest/coverage-v8": "^4.1.9",
     "typedoc": "^0.28.19",
     "typedoc-material-theme": "^1.4.1",
     "typescript": "^6.0.3",
     "vite": "^8.1.0",
-    "vite-plugin-dts": "^5.0.3"
+    "vite-plugin-dts": "^5.0.3",
+    "vitest": "^4.1.9"
   }
 }

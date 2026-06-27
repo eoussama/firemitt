@@ -1,4 +1,4 @@
-const { EnumHelper, ErrorType, EventType } = require("../dist/firemitt.umd");
+import { EnumHelper, ErrorType, EventType } from "../src/index.ts";
 
 
 
@@ -12,7 +12,7 @@ describe("tests EnumHelper", () => {
     });
 
     it("should return undefined for an unknown enum value", () => {
-      expect(EnumHelper.getName(ErrorType, 999)).toBeUndefined();
+      expect(EnumHelper.getName(ErrorType, 999 as ErrorType)).toBeUndefined();
     });
   });
 });

@@ -3,7 +3,7 @@ import dx from "@eoussama/dx";
 
 
 export default dx().append({
-  files: ["test/**/*.js"],
+  files: ["test/**/*.ts"],
   languageOptions: {
     globals: {
       describe: "readonly",
@@ -14,10 +14,7 @@ export default dx().append({
       beforeEach: "readonly",
       afterAll: "readonly",
       afterEach: "readonly",
-      jest: "readonly",
-      require: "readonly",
-      module: "readonly",
-      exports: "readonly",
+      vi: "readonly",
     },
   },
 });

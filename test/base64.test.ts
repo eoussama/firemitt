@@ -1,11 +1,11 @@
-const Base64helper = require("../dist/firemitt.umd").Base64helper;
+import { Base64helper } from "../src/index.ts";
 
 
 
 describe("base64helper", () => {
   describe("encode", () => {
     it("should correctly encode a TMessage object to a Base64 string", () => {
-      const message = {};
+      const message = { type: 0, payload: {} };
       const encoded = Base64helper.encode(message);
 
       expect(encoded).toEqual(expect.any(String));
