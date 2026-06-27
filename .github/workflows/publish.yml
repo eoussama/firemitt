@@ -10,14 +10,14 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         ref: build
 
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v6
       with:
-        node-version: 20.x
+        node-version: 22.x
         registry-url: "https://registry.npmjs.org/"
 
     - name: Publish Package
@@ -38,9 +38,9 @@ jobs:
         ref: build
 
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v6
       with:
-        node-version: 20.x
+        node-version: 22.x
         registry-url: "https://npm.pkg.github.com"
 
     - name: Publish Package
