@@ -5,6 +5,13 @@ import { EventType } from "..";
 
 
 /**
+ * @description
+ * Interval in milliseconds for polling whether the Fireguard popup was closed by the browser.
+ * Used only as a fallback when no Closed event is received (e.g. user clicks the native window X).
+ */
+const CLOSED_POLL_INTERVAL = 500;
+
+/**
  * Helper class for handling authentication processes using Firemitt.
  *
  * @category Helpers
@@ -35,27 +42,41 @@ export class FiremittHelper {
       }
 
       let settled = false;
+      let closedPoller: ReturnType<typeof setInterval>;
+
+      const settle = (fn: () => void) => {
+        if (!settled) {
+          settled = true;
+          clearInterval(closedPoller);
+          fn();
+        }
+      };
+
+      closedPoller = setInterval(() => {
+        if (win.closed) {
+          settle(() => reject(new Error("The authentication window was closed.")));
+        }
+      }, CLOSED_POLL_INTERVAL);
 
       const handleLoaded = () => {
         EventHelper
           .send(EventType.Config, config.fireguard)
           .on<{ token: string }>(EventType.AuthSucceded, (data) => {
-            if (!settled) {
-              settled = true;
-              resolve(data!.token);
-            }
+            settle(() => resolve(data!.token));
           })
           .on<{ error: string }>(EventType.AuthFailed, (data) => {
-            if (!settled) {
-              settled = true;
-              reject(data!.error);
-            }
+            settle(() => reject(data!.error));
+          })
+          .on(EventType.Closed, () => {
+            settle(() => reject(new Error("The authentication window was closed.")));
           });
 
         EventHelper.on(EventType.Loaded, handleLoaded);
       };
 
-      EventHelper.on(EventType.Loaded, handleLoaded);
+      EventHelper
+        .on(EventType.Loaded, handleLoaded)
+        .on(EventType.Retry, () => {});
     });
   }
 }

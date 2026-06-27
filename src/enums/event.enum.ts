@@ -24,4 +24,14 @@ export enum EventType {
    * Indicates a failed authentication event.
    */
   AuthFailed,
+
+  /*
+   * Requests a retry of the authentication flow in the same popup window.
+   */
+  Retry,
+
+  /*
+   * Indicates that the authentication window was explicitly closed by the user.
+   */
+  Closed,
 }
