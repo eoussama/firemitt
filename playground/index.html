@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Firemitt Sandbox</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/eoussama/firemitt/refs/heads/main/assets/favicon.ico" />
+    <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #0d1b24;
+        --surface: #1a2e3b;
+        --surface-2: #1f3848;
+        --border: #2a4455;
+        --accent: #ffe536;
+        --accent-dim: #c9b42a;
+        --text: #d4e8f5;
+        --text-muted: #7a9fb5;
+        --success: #3ecf8e;
+        --error: #ff5c5c;
+        --pending: #ffe536;
+        --radius: 8px;
+        --font: "Inter", system-ui, sans-serif;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 14px;
+        line-height: 1.5;
+        min-height: 100vh;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface);
+      }
+
+      header img {
+        width: 32px;
+        height: 32px;
+      }
+
+      header h1 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--accent);
+        letter-spacing: 0.02em;
+      }
+
+      header span {
+        color: var(--text-muted);
+        font-size: 13px;
+        margin-left: auto;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        height: calc(100vh - 57px);
+      }
+
+      .sidebar {
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .main {
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .section {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .section-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 12px;
+      }
+
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+      }
+
+      input[type="text"],
+      input[type="url"] {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text);
+        font-size: 13px;
+        padding: 7px 10px;
+        outline: none;
+        transition: border-color 0.15s;
+        font-family: var(--font);
+      }
+
+      input[type="text"]:focus,
+      input[type="url"]:focus {
+        border-color: var(--accent);
+      }
+
+      .field {
+        margin-bottom: 10px;
+      }
+
+      .field:last-child {
+        margin-bottom: 0;
+      }
+
+      .field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .field-row:last-child {
+        margin-bottom: 0;
+      }
+
+      .color-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .color-row:last-child {
+        margin-bottom: 0;
+      }
+
+      .url-bar {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      #url-presets {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .url-preset-btn {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 11px;
+        padding: 4px 8px;
+        transition: all 0.15s;
+      }
+
+      .url-preset-btn:hover {
+        border-color: var(--accent);
+        color: var(--text);
+      }
+
+      .url-preset-btn.active {
+        border-color: var(--accent);
+        background: rgba(255, 229, 54, 0.1);
+        color: var(--accent);
+      }
+
+      #scenario-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .scenario-btn {
+        width: 100%;
+        text-align: left;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text);
+        cursor: pointer;
+        font-size: 13px;
+        padding: 9px 12px;
+        transition: all 0.15s;
+        font-family: var(--font);
+      }
+
+      .scenario-btn:hover {
+        border-color: var(--accent-dim);
+      }
+
+      .scenario-btn.active {
+        border-color: var(--accent);
+        background: rgba(255, 229, 54, 0.08);
+        color: var(--accent);
+      }
+
+      #scenario-desc {
+        margin-top: 10px;
+        font-size: 12px;
+        color: var(--text-muted);
+        min-height: 36px;
+        line-height: 1.6;
+      }
+
+      #run-btn {
+        width: 100%;
+        background: var(--accent);
+        border: none;
+        border-radius: var(--radius);
+        color: #0d1b24;
+        cursor: pointer;
+        font-family: var(--font);
+        font-size: 14px;
+        font-weight: 700;
+        padding: 10px;
+        transition: background 0.15s, opacity 0.15s;
+        letter-spacing: 0.02em;
+      }
+
+      #run-btn:hover {
+        background: var(--accent-dim);
+      }
+
+      #run-btn:active {
+        opacity: 0.85;
+      }
+
+      #result-panel {
+        padding: 20px;
+        flex: 1;
+      }
+
+      .result-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 12px;
+      }
+
+      #result-panel[data-state="idle"] .result-badge {
+        display: none;
+      }
+
+      .result-badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border-radius: 4px;
+        padding: 2px 8px;
+        margin-bottom: 10px;
+      }
+
+      #result-panel[data-state="pending"] .result-badge {
+        background: rgba(255, 229, 54, 0.15);
+        color: var(--pending);
+      }
+
+      #result-panel[data-state="success"] .result-badge {
+        background: rgba(62, 207, 142, 0.15);
+        color: var(--success);
+      }
+
+      #result-panel[data-state="error"] .result-badge {
+        background: rgba(255, 92, 92, 0.15);
+        color: var(--error);
+      }
+
+      #result-panel[data-state="pending"] .result-badge::before { content: "Pending"; }
+      #result-panel[data-state="success"] .result-badge::before { content: "Success"; }
+      #result-panel[data-state="error"] .result-badge::before { content: "Error"; }
+
+      #result-text {
+        font-family: "Fira Code", "Cascadia Code", monospace;
+        font-size: 13px;
+        color: var(--text-muted);
+        white-space: pre-wrap;
+        word-break: break-all;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px;
+        min-height: 80px;
+      }
+
+      #result-panel[data-state="success"] #result-text {
+        border-color: rgba(62, 207, 142, 0.3);
+        color: var(--success);
+      }
+
+      #result-panel[data-state="error"] #result-text {
+        border-color: rgba(255, 92, 92, 0.3);
+        color: var(--error);
+      }
+
+      #result-panel[data-state="pending"] #result-text {
+        color: var(--pending);
+        border-color: rgba(255, 229, 54, 0.2);
+      }
+
+      details > summary {
+        cursor: pointer;
+        user-select: none;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      details > summary::before {
+        content: "▶";
+        font-size: 9px;
+        color: var(--text-muted);
+        transition: transform 0.15s;
+        display: inline-block;
+      }
+
+      details[open] > summary::before {
+        transform: rotate(90deg);
+      }
+
+      details .section-title {
+        margin-bottom: 0;
+      }
+
+      details .details-body {
+        margin-top: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <img src="https://raw.githubusercontent.com/eoussama/firemitt/refs/heads/main/assets/firemitt.svg" alt="Firemitt Logo" />
+      <h1>Firemitt Sandbox</h1>
+      <span>Edge-case testing playground</span>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="section">
+          <div class="section-title">Scenarios</div>
+          <div id="scenario-list"></div>
+          <p id="scenario-desc">Select a scenario to pre-fill the config fields, then click Run Auth.</p>
+        </div>
+      </aside>
+
+      <div class="main">
+        <div class="section">
+          <div class="section-title">Fireguard URL</div>
+          <div class="url-bar">
+            <div id="url-presets"></div>
+            <div class="field">
+              <label for="url">Custom URL</label>
+              <input type="url" id="url" placeholder="https://ouss.es/fireguard" />
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <details open>
+            <summary><div class="section-title">App Config</div></summary>
+            <div class="details-body">
+              <div class="field">
+                <label for="name">App name <span style="color: var(--error)">*</span></label>
+                <input type="text" id="name" placeholder="My App" />
+              </div>
+              <div class="field">
+                <label for="logo">Logo URL</label>
+                <input type="url" id="logo" placeholder="https://example.com/logo.png" />
+              </div>
+              <div class="color-row">
+                <div>
+                  <label for="themeText">Text color</label>
+                  <input type="text" id="themeText" placeholder="#1a3544" />
+                </div>
+                <div>
+                  <label for="themePrimary">Primary color</label>
+                  <input type="text" id="themePrimary" placeholder="#ffe536" />
+                </div>
+                <div>
+                  <label for="themeSecondary">Secondary color</label>
+                  <input type="text" id="themeSecondary" placeholder="#1a3544" />
+                </div>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="section">
+          <details open>
+            <summary><div class="section-title">Firebase Config</div></summary>
+            <div class="details-body">
+              <div class="field-row">
+                <div>
+                  <label for="apiKey">API key <span style="color: var(--error)">*</span></label>
+                  <input type="text" id="apiKey" placeholder="AIzaSy..." />
+                </div>
+                <div>
+                  <label for="appId">App ID <span style="color: var(--error)">*</span></label>
+                  <input type="text" id="appId" placeholder="1:000:web:abc" />
+                </div>
+              </div>
+              <div class="field-row">
+                <div>
+                  <label for="projectId">Project ID <span style="color: var(--error)">*</span></label>
+                  <input type="text" id="projectId" placeholder="my-project" />
+                </div>
+                <div>
+                  <label for="authDomain">Auth domain <span style="color: var(--error)">*</span></label>
+                  <input type="text" id="authDomain" placeholder="my-project.firebaseapp.com" />
+                </div>
+              </div>
+              <div class="field-row">
+                <div>
+                  <label for="measurementId">Measurement ID <span style="color: var(--error)">*</span></label>
+                  <input type="text" id="measurementId" placeholder="G-XXXXXXXX" />
+                </div>
+                <div>
+                  <label for="messagingSenderId">Messaging sender ID <span style="color: var(--error)">*</span></label>
+                  <input type="text" id="messagingSenderId" placeholder="000000000000" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="storageBucket">Storage bucket <span style="color: var(--error)">*</span></label>
+                <input type="text" id="storageBucket" placeholder="my-project.appspot.com" />
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="section">
+          <details>
+            <summary><div class="section-title">Window Position & Size</div></summary>
+            <div class="details-body">
+              <div class="field-row">
+                <div>
+                  <label for="dimWidth">Width (px)</label>
+                  <input type="text" id="dimWidth" placeholder="450" />
+                </div>
+                <div>
+                  <label for="dimHeight">Height (px)</label>
+                  <input type="text" id="dimHeight" placeholder="260" />
+                </div>
+              </div>
+              <div class="field-row">
+                <div>
+                  <label for="posX">Left (px)</label>
+                  <input type="text" id="posX" placeholder="auto" />
+                </div>
+                <div>
+                  <label for="posY">Top (px)</label>
+                  <input type="text" id="posY" placeholder="50" />
+                </div>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="section">
+          <button id="run-btn">Run Auth</button>
+        </div>
+
+        <div id="result-panel" data-state="idle">
+          <div class="result-label">Result</div>
+          <div class="result-badge"></div>
+          <div id="result-text">No result yet. Configure a scenario and click Run Auth.</div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="src/main.ts"></script>
+  </body>
+</html>

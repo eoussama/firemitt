@@ -92,7 +92,7 @@ const options = {
 
 FiremittHelper.auth(options)
   .then((token) => {
-    console.log("Authentication successful!", token);
+    console.warn("Authentication successful!", token);
   })
   .catch((error) => {
     console.error("Authentication failed:", error);

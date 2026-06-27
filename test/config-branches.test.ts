@@ -1,4 +1,5 @@
-import { ConfigHelper, InvalidURLError } from "../src/index.ts";
+import { ConfigHelper, InvalidFirebaseConfigError, InvalidURLError } from "../src/index.ts";
+import { VALID_FIREBASE } from "./fixtures.ts";
 
 
 
@@ -14,7 +15,7 @@ describe("tests ConfigHelper branch coverage", () => {
   it("should use default dim when width and height are not provided", () => {
     const config = ConfigHelper.init({
       url: "https://fireguard-instance.com",
-      config: { name: "App", firebase: { apiKey: "key", appId: "", projectId: "", authDomain: "", measurementId: "", storageBucket: "", messagingSenderId: "" } },
+      config: { name: "App", firebase: VALID_FIREBASE },
     });
 
     expect(config.dim).toEqual({ width: 450, height: 260 });
@@ -23,7 +24,7 @@ describe("tests ConfigHelper branch coverage", () => {
   it("should use default pos when x and y are not provided", () => {
     const config = ConfigHelper.init({
       url: "https://fireguard-instance.com",
-      config: { name: "App", firebase: { apiKey: "key", appId: "", projectId: "", authDomain: "", measurementId: "", storageBucket: "", messagingSenderId: "" } },
+      config: { name: "App", firebase: VALID_FIREBASE },
     });
 
     expect(typeof config.pos.x).toBe("number");
@@ -42,7 +43,7 @@ describe("tests ConfigHelper branch coverage", () => {
   it("should accept http:// URLs", () => {
     const config = ConfigHelper.init({
       url: "http://fireguard-instance.com",
-      config: { name: "App", firebase: { apiKey: "key", appId: "", projectId: "", authDomain: "", measurementId: "", storageBucket: "", messagingSenderId: "" } },
+      config: { name: "App", firebase: VALID_FIREBASE },
     });
 
     expect(config.url).toBe("http://fireguard-instance.com/");
@@ -53,7 +54,7 @@ describe("tests ConfigHelper branch coverage", () => {
       url: "https://fireguard-instance.com",
       config: {
         name: "App",
-        firebase: { apiKey: "key", appId: "", projectId: "", authDomain: "", measurementId: "", storageBucket: "", messagingSenderId: "" },
+        firebase: VALID_FIREBASE,
         theme: { text: "red", primary: "blue", secondary: "green" },
       },
     });
@@ -61,20 +62,12 @@ describe("tests ConfigHelper branch coverage", () => {
     expect(config.fireguard.theme).toEqual({ text: "red", primary: "blue", secondary: "green" });
   });
 
-  it("should use default firebase values when firebase is not provided", () => {
-    const config = ConfigHelper.init({
-      url: "https://fireguard-instance.com",
-      config: { name: "App" },
-    });
-
-    expect(config.fireguard.firebase).toEqual({
-      apiKey: "",
-      appId: "",
-      projectId: "",
-      authDomain: "",
-      measurementId: "",
-      storageBucket: "",
-      messagingSenderId: "",
-    });
+  it("should throw InvalidFirebaseConfigError when firebase is not provided", () => {
+    expect(() =>
+      ConfigHelper.init({
+        url: "https://fireguard-instance.com",
+        config: { name: "App" },
+      }),
+    ).toThrow(InvalidFirebaseConfigError);
   });
 });

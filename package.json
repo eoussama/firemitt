@@ -43,6 +43,7 @@
   "scripts": {
     "prepublishOnly": "pnpm build",
     "dev": "vite",
+    "sandbox": "vite --config playground/vite.config.js",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "preview": "vite preview",
@@ -55,7 +56,8 @@
     "prod": "pnpm audit && pnpm lint && pnpm build && pnpm test && pnpm coverage && pnpm doc"
   },
   "dependencies": {
-    "@eoussama/core": "^0.0.4"
+    "@eoussama/core": "^0.0.4",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eoussama/dx": "^0.0.4",
