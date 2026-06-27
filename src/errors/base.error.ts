@@ -4,10 +4,10 @@ import { EnumHelper, ErrorType } from "..";
 
 
 /**
- * @category Errors
- *
  * Custom error class that extends the built-in Error class.
  * It is used as a base class for creating custom error types in your application.
+ *
+ * @category Errors
  */
 export class BaseError extends Error implements IError {
   /**

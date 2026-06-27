@@ -3,9 +3,9 @@ import type { ErrorType } from "..";
 
 
 /**
- * @category Firemitt
- *
  * Custom error type.
+ *
+ * @category Firemitt
  *
  * @type {IError}
  */

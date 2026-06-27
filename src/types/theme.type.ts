@@ -1,8 +1,8 @@
 /**
- * @category Fireguard
- *
  * Defines the theme colors used in the application.
  * This type specifies the color scheme for theming purposes, including text, primary, and secondary colors.
+ *
+ * @category Fireguard
  *
  * @type {TTheme}
  */

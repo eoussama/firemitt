@@ -1,7 +1,7 @@
 /**
- * @category Firemitt
- *
  * Enumeration representing error names.
+ *
+ * @category Firemitt
  */
 export enum ErrorType {
 

@@ -5,10 +5,10 @@ import { BaseError } from "./base.error";
 
 
 /**
- * @category Errors
- *
  * Custom error class representing an error that occurs when an invalid provider name is provided.
  * This error is thrown when an operation expects a valid provider name, but an invalid one is provided.
+ *
+ * @category Errors
  */
 export class InvalidProviderError extends BaseError {
   /**

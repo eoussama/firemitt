@@ -3,9 +3,9 @@ import type { TMessage } from "..";
 
 
 /**
- * @category Helpers
- *
  * Helper class for Base64 encoding and decoding of messages.
+ *
+ * @category Helpers
  *
  * This class provides static methods to encode and decode messages using Base64 encoding. It is designed to work with
  * `TMessage` type, allowing for serialization and deserialization of messages.

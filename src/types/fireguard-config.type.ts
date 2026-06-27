@@ -5,10 +5,10 @@ import type { TTheme } from "./theme.type";
 
 
 /**
- * @category Fireguard
- *
  * Configuration settings for Fireguard.
  * This type includes essential configuration details necessary for initializing and customizing the Fireguard.
+ *
+ * @category Fireguard
  *
  * @type {TFireguardConfig}
  */

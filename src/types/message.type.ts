@@ -3,10 +3,10 @@ import type { EventType } from "..";
 
 
 /**
- * @category Firemitt
- *
  * Represents a generic message structure.
  * This type is used for defining a message format with a specific type and payload. It is generic and can accommodate different payload types.
+ *
+ * @category Firemitt
  *
  * @type {TMessage<T>}
  *

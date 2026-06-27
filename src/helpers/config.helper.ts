@@ -16,9 +16,9 @@ import {
 
 
 /**
- * @category Helpers
- *
  * Helper class for configuring Firemitt and Fireguard settings.
+ *
+ * @category Helpers
  *
  * This class provides static methods to construct and validate configuration objects for Firemitt and Fireguard.
  * It handles dimensions, positions, URLs, and Fireguard specific configurations including theme and Firebase settings.

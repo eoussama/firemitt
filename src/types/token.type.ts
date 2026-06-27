@@ -1,8 +1,8 @@
 /**
- * @category Firebase
- *
  * Represents a token structure with additional properties.
  * This type is primarily used for authentication purposes, containing a token response and possibly other object properties.
+ *
+ * @category Firebase
  *
  * @type {TToken}
  */

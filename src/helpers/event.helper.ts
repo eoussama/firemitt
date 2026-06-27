@@ -6,9 +6,9 @@ import { Base64helper } from ".";
 
 
 /**
- * @category Helpers
- *
  * Helper class for managing custom events across different windows or iframes.
+ *
+ * @category Helpers
  *
  * This class provides static methods to initialize the event system, send encoded messages, and listen for specific event types.
  * It uses the `Base64helper` class for encoding and decoding messages.

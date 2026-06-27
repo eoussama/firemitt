@@ -1,7 +1,7 @@
 /**
- * @category Firemitt
- *
  * Enumeration representing various event types.
+ *
+ * @category Firemitt
  */
 export enum EventType {
 

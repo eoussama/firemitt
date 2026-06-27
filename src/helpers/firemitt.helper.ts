@@ -5,9 +5,9 @@ import { EventType } from "..";
 
 
 /**
- * @category Helpers
- *
  * Helper class for handling authentication processes using Firemitt.
+ *
+ * @category Helpers
  *
  * This class provides a static method to facilitate authentication by configuring and communicating with a Firemitt window.
  * It uses the `ConfigHelper` to initialize configuration and the `EventHelper` to manage event communications.

@@ -6,10 +6,10 @@ import type { TTheme } from "./theme.type";
 
 
 /**
- * @category Fireguard
- *
  * Options for configuring Fireguard.
  * This type specifies the options that can be provided to customize the Fireguard. It extends the TFireguardConfig with optional properties.
+ *
+ * @category Fireguard
  *
  * @type {TFireguardOptions}
  */

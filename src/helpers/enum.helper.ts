@@ -3,9 +3,9 @@ import type { TUnsafe } from "@eoussama/core";
 
 
 /**
- * @category Helpers
- *
  * Helps with enums.
+ *
+ * @category Helpers
  *
  * @class EnumHelper
  */

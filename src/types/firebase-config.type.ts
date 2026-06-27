@@ -1,7 +1,7 @@
 /**
- * @category Firebase
- *
  * Represents the configuration settings for a Firebase application.
+ *
+ * @category Firebase
  *
  * This type defines the necessary parameters to configure and initialize a Firebase application.
  * It includes details for various Firebase services such as Authentication, Firestore, Analytics, and others.
