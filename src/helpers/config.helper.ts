@@ -6,7 +6,6 @@ import type {
   TFiremittConfig,
   TFiremittOptions,
   TPos,
-  TTheme,
 } from "..";
 import {
   InvalidAppNameError,
@@ -91,29 +90,28 @@ export class ConfigHelper {
    *
    * @static
    * @param {TUnsafe<Partial<TFireguardOptions>>} config - The potentially undefined or null Fireguard configuration options.
-   * @param {Partial<TTheme>} [fallbackTheme] - Optional fallback theme settings.
    * @returns {TFireguardConfig} The constructed Fireguard configuration object.
    * @throws {InvalidAppNameError} If the application name is invalid.
    * @throws {InvalidFirebaseConfigError} If the Firebase configuration is invalid.
    */
-  private static getFireguardConfig(config: TUnsafe<Partial<TFireguardOptions>>, fallbackTheme?: Partial<TTheme>): TFireguardConfig {
+  private static getFireguardConfig(config: TUnsafe<Partial<TFireguardOptions>>): TFireguardConfig {
     const name = config?.name ?? "";
     const logo = config?.logo ?? "";
 
     const theme = {
-      text: config?.theme?.text || fallbackTheme?.text || "#1a3544",
-      primary: config?.theme?.primary || fallbackTheme?.primary || "#ffe536",
-      secondary: config?.theme?.secondary || fallbackTheme?.secondary || "#1a3544",
+      text: config?.theme?.text || "#1a3544",
+      primary: config?.theme?.primary || "#ffe536",
+      secondary: config?.theme?.secondary || "#1a3544",
     };
 
     const firebase = config?.firebase ?? {
-      apiKey: config?.firebase?.apiKey ?? "",
-      appId: config?.firebase?.appId ?? "",
-      projectId: config?.firebase?.projectId ?? "",
-      authDomain: config?.firebase?.authDomain ?? "",
-      measurementId: config?.firebase?.measurementId ?? "",
-      storageBucket: config?.firebase?.storageBucket ?? "",
-      messagingSenderId: config?.firebase?.messagingSenderId ?? "",
+      apiKey: "",
+      appId: "",
+      projectId: "",
+      authDomain: "",
+      measurementId: "",
+      storageBucket: "",
+      messagingSenderId: "",
     };
 
     if (name.length === 0) {

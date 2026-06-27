@@ -26,14 +26,15 @@
   ],
   "main": "firemitt.es.js",
   "files": [
-    "dist",
+    "LICENSE",
     "README.md",
-    "LICENSE"
+    "dist"
   ],
   "scripts": {
     "prepublishOnly": "pnpm build",
     "dev": "vite",
     "test": "pnpm exec jest",
+    "coverage": "pnpm exec jest --coverage",
     "preview": "vite preview",
     "clean": "rm -rf dist pkg",
     "build": "tsc && vite build",
@@ -41,7 +42,18 @@
     "lint:fix": "dx lint --fix",
     "package": "./scripts/package.sh",
     "doc": "pnpm exec typedoc && cp assets/favicon.ico doc/",
-    "prod": "pnpm audit && pnpm lint && pnpm build && pnpm test"
+    "prod": "pnpm audit && pnpm lint && pnpm build && pnpm test && pnpm coverage"
+  },
+  "jest": {
+    "coverageProvider": "v8",
+    "coverageThreshold": {
+      "global": {
+        "branches": 100,
+        "functions": 100,
+        "lines": 100,
+        "statements": 100
+      }
+    }
   },
   "dependencies": {
     "@eoussama/core": "^0.0.4"
