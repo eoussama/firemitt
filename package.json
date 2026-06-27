@@ -24,12 +24,22 @@
     "fireguard",
     "firebase-auth"
   ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/firemitt.es.js",
+      "require": "./dist/firemitt.umd.js"
+    }
+  },
   "main": "firemitt.es.js",
   "files": [
     "LICENSE",
     "README.md",
     "dist"
   ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "prepublishOnly": "pnpm build",
     "dev": "vite",
