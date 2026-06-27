@@ -35,10 +35,10 @@
     "doc": "pnpm exec typedoc && cp assets/favicon.ico doc/"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
-    "typedoc": "^0.25.7",
-    "typedoc-material-theme": "^1.0.2",
-    "typescript": "^5.2.2",
+    "jest": "^30.4.2",
+    "typedoc": "^0.28.19",
+    "typedoc-material-theme": "^1.4.1",
+    "typescript": "^6.0.3",
     "vite": "^8.1.0",
     "vite-plugin-dts": "^5.0.3"
   }
