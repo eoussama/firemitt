@@ -17,6 +17,7 @@ import { Base64helper } from ".";
  */
 export class EventHelper {
   private static target: Window;
+  private static hostWindow: Window = globalThis.window;
   private static handlers: Set<(e: MessageEvent) => void> = new Set();
 
   /**
@@ -26,7 +27,7 @@ export class EventHelper {
    */
   private static cleanup(): void {
     for (const handler of this.handlers) {
-      window.removeEventListener("message", handler);
+      this.hostWindow.removeEventListener("message", handler);
     }
 
     this.handlers.clear();
@@ -37,11 +38,13 @@ export class EventHelper {
    *
    * This method sets the target window where the messages will be posted to.
    * Any listeners registered during a previous session are removed first.
+   * The calling page's window is captured as the host window for message listeners.
    *
    * @param {Window} target - The target window to which messages will be sent.
    * @returns {boolean} Returns true if the target is successfully set, otherwise false.
    */
   static init(target: Window): boolean {
+    this.hostWindow = window;
     this.cleanup();
     this.target = target;
 
@@ -81,18 +84,25 @@ export class EventHelper {
   static on<T = unknown>(type: EventType, func: (data?: T) => void): typeof EventHelper {
     const handler = (e: MessageEvent) => {
       if (e.isTrusted) {
-        const message = Base64helper.decode(e.data);
+        let message: ReturnType<typeof Base64helper.decode>;
+
+        try {
+          message = Base64helper.decode(e.data);
+        }
+        catch {
+          return;
+        }
 
         if (message.type === type) {
           func(message.payload as T);
-          window.removeEventListener("message", handler);
+          this.hostWindow.removeEventListener("message", handler);
           this.handlers.delete(handler);
         }
       }
     };
 
     this.handlers.add(handler);
-    window.addEventListener("message", handler);
+    this.hostWindow.addEventListener("message", handler);
 
     return this;
   }

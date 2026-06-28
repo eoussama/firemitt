@@ -71,6 +71,20 @@ describe("tests EventHelper", () => {
       expect(callback).not.toHaveBeenCalled();
     });
 
+    it("should silently ignore messages that are not valid base64", () => {
+      EventHelper.init(mockTarget as unknown as Window);
+
+      const callback = vi.fn();
+
+      EventHelper.on(EventType.Loaded, callback);
+
+      expect(() => {
+        messageListeners[0]({ isTrusted: true, data: "not-valid-base64!!!" } as MessageEvent);
+      }).not.toThrow();
+
+      expect(callback).not.toHaveBeenCalled();
+    });
+
     it("should not invoke the callback for untrusted messages", () => {
       EventHelper.init(mockTarget as unknown as Window);
 

@@ -250,6 +250,14 @@ describe("tests FiremittHelper", () => {
       });
     });
 
+    afterEach(() => {
+      const helper = FiremittHelper as unknown as { cancelActiveIframe: (() => void) | null };
+
+      if (helper.cancelActiveIframe) {
+        helper.cancelActiveIframe = null;
+      }
+    });
+
     it("should throw InvalidIframeError when neither element nor container is given", () => {
       expect(() =>
         FiremittHelper.auth({ ...BASE_OPTIONS, mode: "iframe" }),
@@ -343,6 +351,7 @@ describe("tests FiremittHelper", () => {
     it("should create an iframe inside the container and remove it on success", async () => {
       const createdIframe = {
         src: "",
+        style: { width: "", height: "" },
         contentWindow: iframeWin,
         parentNode: { removeChild: vi.fn() },
         addEventListener: vi.fn((event: string, handler: () => void) => {
@@ -366,6 +375,8 @@ describe("tests FiremittHelper", () => {
 
       expect(container.appendChild).toHaveBeenCalledWith(createdIframe);
       expect(createdIframe.src).toBe("https://fireguard-instance.com/");
+      expect(createdIframe.style.width).toBe("450px");
+      expect(createdIframe.style.height).toBe("260px");
 
       loadHandler!();
 
@@ -382,9 +393,69 @@ describe("tests FiremittHelper", () => {
       expect(createdIframe.parentNode.removeChild).toHaveBeenCalledWith(createdIframe);
     });
 
+    it("should apply custom dimensions to auto-created iframe", async () => {
+      const createdIframe = {
+        src: "",
+        style: { width: "", height: "" },
+        contentWindow: iframeWin,
+        parentNode: { removeChild: vi.fn() },
+        addEventListener: vi.fn((event: string, handler: () => void) => {
+          if (event === "load") {
+            loadHandler = handler;
+          }
+        }),
+      };
+
+      const container = { appendChild: vi.fn() };
+
+      globalThis.document = {
+        createElement: vi.fn(() => createdIframe),
+      } as unknown as Document;
+
+      const authPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        dim: { width: 800, height: 600 },
+        iframe: { container: container as unknown as HTMLElement },
+      });
+
+      expect(createdIframe.style.width).toBe("800px");
+      expect(createdIframe.style.height).toBe("600px");
+
+      loadHandler!();
+
+      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
+
+      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "dim-token" } });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
+
+      await expect(authPromise).resolves.toBe("dim-token");
+    });
+
+    it("should not set dimensions on a caller-provided iframe element", async () => {
+      const ownedIframe = {
+        ...mockIframe,
+        style: { width: "", height: "" },
+      };
+
+      FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        dim: { width: 800, height: 600 },
+        iframe: { element: ownedIframe as unknown as HTMLIFrameElement },
+      }).catch(() => {});
+
+      expect(ownedIframe.style.width).toBe("");
+      expect(ownedIframe.style.height).toBe("");
+    });
+
     it("should create an iframe inside the container and remove it on failure", async () => {
       const createdIframe = {
         src: "",
+        style: { width: "", height: "" },
         contentWindow: iframeWin,
         parentNode: { removeChild: vi.fn() },
         addEventListener: vi.fn((event: string, handler: () => void) => {
@@ -445,9 +516,154 @@ describe("tests FiremittHelper", () => {
       await expect(authPromise).resolves.toBe("first-settle");
     });
 
+    it("should cancel an active session when a new auth call is made", async () => {
+      const firstIframe = {
+        src: "",
+        style: { width: "", height: "" },
+        contentWindow: iframeWin,
+        parentNode: { removeChild: vi.fn() },
+        addEventListener: vi.fn((event: string, handler: () => void) => {
+          if (event === "load") {
+            loadHandler = handler;
+          }
+        }),
+      };
+
+      const container = { appendChild: vi.fn() };
+
+      globalThis.document = {
+        createElement: vi.fn(() => firstIframe),
+      } as unknown as Document;
+
+      const firstPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { container: container as unknown as HTMLElement },
+      });
+
+      const secondIframe = {
+        src: "",
+        style: { width: "", height: "" },
+        contentWindow: iframeWin,
+        parentNode: { removeChild: vi.fn() },
+        addEventListener: vi.fn(),
+      };
+
+      globalThis.document = {
+        createElement: vi.fn(() => secondIframe),
+      } as unknown as Document;
+
+      const secondPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { container: container as unknown as HTMLElement },
+      });
+
+      await expect(firstPromise).rejects.toThrow("A new authentication session was started.");
+
+      secondPromise.catch(() => {});
+
+      expect(firstIframe.parentNode.removeChild).toHaveBeenCalledWith(firstIframe);
+    });
+
+    it("should not remove a caller-provided element when cancelling an active session", async () => {
+      const firstIframe = {
+        ...mockIframe,
+        style: { width: "", height: "" },
+        parentNode: { removeChild: vi.fn() },
+      };
+
+      const firstPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { element: firstIframe as unknown as HTMLIFrameElement },
+      });
+
+      const secondIframe = {
+        src: "",
+        style: { width: "", height: "" },
+        contentWindow: iframeWin,
+        parentNode: { removeChild: vi.fn() },
+        addEventListener: vi.fn(),
+      };
+
+      const container = { appendChild: vi.fn() };
+
+      globalThis.document = {
+        createElement: vi.fn(() => secondIframe),
+      } as unknown as Document;
+
+      const secondPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { container: container as unknown as HTMLElement },
+      });
+
+      await expect(firstPromise).rejects.toThrow("A new authentication session was started.");
+
+      secondPromise.catch(() => {});
+
+      expect(firstIframe.parentNode.removeChild).not.toHaveBeenCalled();
+    });
+
+    it("should not call the load handler after the session has been cancelled", async () => {
+      let capturedLoadHandler: (() => void) | undefined;
+
+      const cancelledIframe = {
+        src: "",
+        style: { width: "", height: "" },
+        contentWindow: iframeWin,
+        parentNode: { removeChild: vi.fn() },
+        addEventListener: vi.fn((event: string, handler: () => void) => {
+          if (event === "load") {
+            capturedLoadHandler = handler;
+          }
+        }),
+      };
+
+      const container = { appendChild: vi.fn() };
+
+      globalThis.document = {
+        createElement: vi.fn(() => cancelledIframe),
+      } as unknown as Document;
+
+      const firstPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { container: container as unknown as HTMLElement },
+      });
+
+      const secondIframe = {
+        src: "",
+        style: { width: "", height: "" },
+        contentWindow: iframeWin,
+        parentNode: { removeChild: vi.fn() },
+        addEventListener: vi.fn(),
+      };
+
+      globalThis.document = {
+        createElement: vi.fn(() => secondIframe),
+      } as unknown as Document;
+
+      const secondPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { container: container as unknown as HTMLElement },
+      });
+
+      await expect(firstPromise).rejects.toThrow("A new authentication session was started.");
+
+      secondPromise.catch(() => {});
+
+      capturedLoadHandler!();
+
+      expect(iframeWin.postMessage).not.toHaveBeenCalled();
+    });
+
     it("should reject and clean up when contentWindow is null after load", async () => {
       const nullWinIframe = {
         src: "",
+        style: { width: "", height: "" },
         contentWindow: null,
         parentNode: { removeChild: vi.fn() },
         addEventListener: vi.fn((event: string, handler: () => void) => {

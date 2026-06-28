@@ -23,6 +23,12 @@ const CLOSED_POLL_INTERVAL = 500;
  */
 export class FiremittHelper {
   /**
+   * Cancels the currently active iframe session, if any.
+   * Removes the owned iframe from the DOM and rejects its promise.
+   */
+  private static cancelActiveIframe: (() => void) | null = null;
+
+  /**
    * Runs the shared event-driven auth flow against an already-initialized `EventHelper` target.
    * Resolves with the token on success, rejects on failure or close.
    * The `cleanup` callback is invoked once the promise settles (regardless of outcome).
@@ -130,6 +136,7 @@ export class FiremittHelper {
   /**
    * Initiates authentication by embedding Fireguard inside an iframe.
    * Uses a caller-provided iframe element, or creates one inside the provided container.
+   * If a previous iframe session is still active, it is cancelled before starting the new one.
    *
    * @param options - The options required to configure and initiate the Firemitt authentication process.
    * @returns A promise that resolves with the authentication token on success, or rejects with an error on failure.
@@ -141,6 +148,9 @@ export class FiremittHelper {
     if (!iframeOpts?.element && !iframeOpts?.container) {
       throw new InvalidIframeError();
     }
+
+    FiremittHelper.cancelActiveIframe?.();
+    FiremittHelper.cancelActiveIframe = null;
 
     const config = ConfigHelper.init(options);
 
@@ -156,16 +166,35 @@ export class FiremittHelper {
       iframeOpts.container!.appendChild(iframe);
     }
 
+    if (owned) {
+      iframe.style.width = `${config.dim.width}px`;
+      iframe.style.height = `${config.dim.height}px`;
+    }
+
     iframe.src = config.url;
 
     const cleanup = () => {
+      FiremittHelper.cancelActiveIframe = null;
+
       if (owned && iframe.parentNode) {
         iframe.parentNode.removeChild(iframe);
       }
     };
 
     return new Promise<string>((resolve, reject) => {
+      let cancelled = false;
+
+      FiremittHelper.cancelActiveIframe = () => {
+        cancelled = true;
+        cleanup();
+        reject(new Error("A new authentication session was started."));
+      };
+
       iframe.addEventListener("load", () => {
+        if (cancelled) {
+          return;
+        }
+
         const win = iframe.contentWindow;
 
         if (!win || !EventHelper.init(win)) {

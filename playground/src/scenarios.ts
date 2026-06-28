@@ -17,6 +17,7 @@ export type TFormValues = {
   readonly dimHeight: string;
   readonly posX: string;
   readonly posY: string;
+  readonly mode: string;
 };
 
 export type TScenario = {
@@ -115,6 +116,30 @@ export const SCENARIOS: readonly TScenario[] = [
       name: "Test App",
       dimWidth: "wide",
       dimHeight: "tall",
+    },
+  },
+  {
+    label: "Iframe embed (auto-create)",
+    description: "Opens Fireguard embedded in an iframe created inside the result panel. Uses mode: \"iframe\" with a container.",
+    preset: {
+      name: "Test App",
+      mode: "iframe",
+    },
+  },
+  {
+    label: "Iframe embed (dialog)",
+    description: "Opens Fireguard embedded in an iframe inside a modal <dialog>. The dialog closes automatically when auth resolves or rejects.",
+    preset: {
+      name: "Test App",
+      mode: "iframe-dialog",
+    },
+  },
+  {
+    label: "Iframe embed (existing element)",
+    description: "Reuses a persistent <iframe> element already in the DOM. Fireguard is loaded into it without Firemitt managing its lifecycle.",
+    preset: {
+      name: "Test App",
+      mode: "iframe-element",
     },
   },
 ];
