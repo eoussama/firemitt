@@ -14,8 +14,13 @@ export type TToken = {
   _tokenResponse: {
 
     /**
-     * The OAuth ID token.
+     * The OAuth ID token. Present for OIDC-based providers (Google, Apple, Microsoft).
      */
-    oauthIdToken: string;
+    oauthIdToken?: string;
+
+    /**
+     * The OAuth access token. Present for all OAuth providers.
+     */
+    oauthAccessToken?: string;
   };
 } & object;

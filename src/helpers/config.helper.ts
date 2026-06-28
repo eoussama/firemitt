@@ -108,6 +108,8 @@ export class ConfigHelper {
       messagingSenderId: "",
     };
 
+    const provider = config?.provider ?? "google";
+
     const nameResult = FireguardOptionsSchema.shape.name.safeParse(name);
 
     if (!nameResult.success) {
@@ -120,7 +122,7 @@ export class ConfigHelper {
       throw new InvalidFirebaseConfigError();
     }
 
-    return { name, logo, theme, firebase };
+    return { name, logo, theme, firebase, provider };
   }
 
   /**

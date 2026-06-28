@@ -2,6 +2,7 @@ export type TFormValues = {
   readonly url: string;
   readonly name: string;
   readonly logo: string;
+  readonly provider: string;
   readonly apiKey: string;
   readonly appId: string;
   readonly projectId: string;
@@ -75,6 +76,14 @@ export const SCENARIOS: readonly TScenario[] = [
       measurementId: "",
       storageBucket: "",
       messagingSenderId: "",
+    },
+  },
+  {
+    label: "GitHub provider",
+    description: "Uses GitHub as the auth provider instead of the default Google.",
+    preset: {
+      name: "Test App",
+      provider: "github",
     },
   },
   {

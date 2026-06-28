@@ -4,7 +4,7 @@ import { SCENARIOS } from "./scenarios";
 
 
 
-const DEFAULT_FIREGUARD_URL = import.meta.env.VITE_FIREGUARD_URL || "https://ouss.es/fireguard";
+const DEFAULT_FIREGUARD_URL = import.meta.env.VITE_FIREGUARD_URL || "http://localhost:5173";
 
 function getField(id: string): HTMLInputElement {
   return document.getElementById(id) as HTMLInputElement;
@@ -15,6 +15,7 @@ function readForm(): TFormValues {
     url: getField("url").value.trim(),
     name: getField("name").value.trim(),
     logo: getField("logo").value.trim(),
+    provider: getField("provider").value.trim(),
     apiKey: getField("apiKey").value.trim(),
     appId: getField("appId").value.trim(),
     projectId: getField("projectId").value.trim(),
@@ -32,11 +33,18 @@ function readForm(): TFormValues {
   };
 }
 
+function syncUrlChips(url: string): void {
+  document.querySelectorAll<HTMLButtonElement>(".url-preset-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.url === url);
+  });
+}
+
 function applyPreset(preset: Partial<TFormValues>): void {
   const defaults: TFormValues = {
     url: DEFAULT_FIREGUARD_URL,
     name: "",
     logo: "",
+    provider: "",
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? "",
     appId: import.meta.env.VITE_FIREBASE_APP_ID ?? "",
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? "",
@@ -62,6 +70,8 @@ function applyPreset(preset: Partial<TFormValues>): void {
       el.value = value;
     }
   }
+
+  syncUrlChips(resolved.url);
 }
 
 function setResult(state: "idle" | "pending" | "success" | "error", message: string): void {
@@ -108,6 +118,7 @@ async function runAuth(): Promise<void> {
     config: {
       name: values.name,
       ...(values.logo ? { logo: values.logo } : {}),
+      provider: values.provider.toLowerCase() || "google",
       ...(values.themeText && values.themePrimary && values.themeSecondary
         ? {
             theme: {
@@ -168,10 +179,10 @@ function setActiveScenario(active: HTMLButtonElement): void {
 
 function buildUrlPresets(): void {
   const presets = [
-    { label: "Hosted", value: DEFAULT_FIREGUARD_URL },
     { label: "localhost:5173", value: "http://localhost:5173" },
     { label: "localhost:5174", value: "http://localhost:5174" },
     { label: "localhost:8080", value: "http://localhost:8080" },
+    { label: "Hosted", value: "https://ouss.es/fireguard" },
   ];
 
   const bar = document.getElementById("url-presets") as HTMLElement;
@@ -181,15 +192,11 @@ function buildUrlPresets(): void {
 
     btn.className = "url-preset-btn";
     btn.textContent = preset.label;
+    btn.dataset.url = preset.value;
     btn.addEventListener("click", () => {
       getField("url").value = preset.value;
-      document.querySelectorAll(".url-preset-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
+      syncUrlChips(preset.value);
     });
-
-    if (preset.value === DEFAULT_FIREGUARD_URL) {
-      btn.classList.add("active");
-    }
 
     bar.appendChild(btn);
   }
@@ -219,6 +226,11 @@ function init(): void {
   buildUrlPresets();
   buildScenarios();
   seedFromEnv();
+  syncUrlChips(DEFAULT_FIREGUARD_URL);
+
+  getField("url").addEventListener("input", () => {
+    syncUrlChips(getField("url").value.trim());
+  });
 
   document.getElementById("run-btn")!.addEventListener("click", () => {
     void runAuth();

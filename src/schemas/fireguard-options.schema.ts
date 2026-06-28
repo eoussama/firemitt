@@ -14,6 +14,7 @@ export const FireguardOptionsSchema = z.object({
   name: z.string().min(1),
   firebase: FirebaseConfigSchema,
   logo: z.string().optional(),
+  provider: z.string().min(1).optional(),
   theme: z
     .object({
       text: z.string(),
