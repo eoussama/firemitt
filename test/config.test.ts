@@ -59,7 +59,7 @@ describe("configHelper", () => {
         fireguard: {
           name: "App",
           logo: "",
-          theme: { text: "#1a3544", primary: "#ffe536", secondary: "#1a3544" },
+          theme: { text: "#1a3544", primary: "#ffe536", secondary: "#1a3544", background: "#ffffff" },
           firebase: VALID_FIREBASE,
           provider: "google",
         },

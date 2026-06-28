@@ -22,4 +22,9 @@ export type TTheme = {
    * The secondary color of the theme.
    */
   secondary: string;
+
+  /**
+   * The background color of the theme.
+   */
+  background: string;
 };

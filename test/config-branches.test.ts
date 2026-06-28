@@ -59,7 +59,7 @@ describe("tests ConfigHelper branch coverage", () => {
       },
     });
 
-    expect(config.fireguard.theme).toEqual({ text: "red", primary: "blue", secondary: "green" });
+    expect(config.fireguard.theme).toEqual({ text: "red", primary: "blue", secondary: "green", background: "#ffffff" });
   });
 
   it("should throw InvalidFirebaseConfigError when firebase is not provided", () => {

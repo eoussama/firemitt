@@ -13,6 +13,7 @@ export type TFormValues = {
   readonly themeText: string;
   readonly themePrimary: string;
   readonly themeSecondary: string;
+  readonly themeBackground: string;
   readonly dimWidth: string;
   readonly dimHeight: string;
   readonly posX: string;
@@ -96,6 +97,7 @@ export const SCENARIOS: readonly TScenario[] = [
       themeText: "#79531a",
       themePrimary: "#ee16cc",
       themeSecondary: "#12ff32",
+      themeBackground: "#0d1b24",
     },
   },
   {
