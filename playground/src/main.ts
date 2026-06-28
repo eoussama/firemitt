@@ -30,6 +30,7 @@ function readForm(): TFormValues {
     dimHeight: getField("dimHeight").value.trim(),
     posX: getField("posX").value.trim(),
     posY: getField("posY").value.trim(),
+    mode: (document.getElementById("mode") as HTMLSelectElement)?.value?.trim() ?? "",
   };
 }
 
@@ -59,6 +60,7 @@ function applyPreset(preset: Partial<TFormValues>): void {
     dimHeight: "",
     posX: "",
     posY: "",
+    mode: "",
   };
 
   const resolved = { ...defaults, ...preset };
@@ -96,9 +98,44 @@ async function runAuth(): Promise<void> {
   };
 
   const allFirebaseEmpty = Object.values(firebase).every(v => v === "");
+  const isIframe = values.mode === "iframe";
+  const isIframeDialog = values.mode === "iframe-dialog";
+  const isIframeElement = values.mode === "iframe-element";
+
+  const iframeContainer = isIframe
+    ? (document.getElementById("iframe-container") as HTMLElement)
+    : undefined;
+
+  let dialogContainer: HTMLElement | undefined;
+
+  if (isIframeDialog) {
+    const dialog = document.getElementById("iframe-dialog") as HTMLDialogElement;
+
+    dialogContainer = dialog.querySelector<HTMLElement>(".dialog-iframe-container") ?? undefined;
+    dialog.showModal();
+  }
+
+  let existingIframe: HTMLIFrameElement | undefined;
+
+  if (isIframeElement) {
+    existingIframe = document.getElementById("fireguard-iframe") as HTMLIFrameElement;
+    existingIframe.style.display = "block";
+  }
+  else {
+    const el = document.getElementById("fireguard-iframe") as HTMLIFrameElement;
+
+    el.style.display = "none";
+  }
 
   const options = {
     url: values.url,
+    ...(isIframe
+      ? { mode: "iframe" as const, iframe: { container: iframeContainer! } }
+      : isIframeDialog
+        ? { mode: "iframe" as const, iframe: { container: dialogContainer! } }
+        : isIframeElement
+          ? { mode: "iframe" as const, iframe: { element: existingIframe! } }
+          : {}),
     ...(values.dimWidth || values.dimHeight
       ? {
           dim: {
@@ -132,14 +169,26 @@ async function runAuth(): Promise<void> {
     },
   };
 
-  setResult("pending", "Waiting for authentication...");
+  const pendingMsg = (isIframe || isIframeDialog || isIframeElement)
+    ? "Waiting for authentication in iframe..."
+    : "Waiting for authentication...";
+
+  setResult("pending", pendingMsg);
 
   try {
     const token = await FiremittHelper.auth(options);
 
+    if (isIframeDialog) {
+      (document.getElementById("iframe-dialog") as HTMLDialogElement).close();
+    }
+
     setResult("success", `Token: ${token}`);
   }
   catch (err) {
+    if (isIframeDialog) {
+      (document.getElementById("iframe-dialog") as HTMLDialogElement).close();
+    }
+
     const message = err instanceof Error ? err.message : String(err);
 
     setResult("error", message);

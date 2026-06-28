@@ -5,6 +5,7 @@ export * from "./fireguard-config.type";
 export * from "./fireguard-options.type";
 export * from "./firemitt-config.type";
 export * from "./firemitt-options.type";
+export * from "./iframe-options.type";
 export * from "./message.type";
 export * from "./pos.type";
 export * from "./theme.type";

@@ -358,7 +358,6 @@
     <header>
       <img src="https://raw.githubusercontent.com/eoussama/firemitt/refs/heads/main/assets/firemitt.svg" alt="Firemitt Logo" />
       <h1>Firemitt Playground</h1>
-      <span>Edge-case testing playground</span>
     </header>
 
     <div class="layout">
@@ -496,6 +495,19 @@
         </div>
 
         <div class="section">
+          <div class="section-title">Mode</div>
+          <div class="field">
+            <label for="mode">Auth mode</label>
+            <select id="mode" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:7px 10px;outline:none;font-family:var(--font);">
+              <option value="">popup (default)</option>
+              <option value="iframe">iframe (embedded)</option>
+              <option value="iframe-dialog">iframe (dialog)</option>
+              <option value="iframe-element">iframe (existing element)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section">
           <button id="run-btn">Run Auth</button>
         </div>
 
@@ -503,9 +515,40 @@
           <div class="result-label">Result</div>
           <div class="result-badge"></div>
           <div id="result-text">No result yet. Configure a scenario and click Run Auth.</div>
+          <div id="iframe-container" style="margin-top:16px;border-radius:var(--radius);overflow:hidden;"></div>
+          <iframe
+            id="fireguard-iframe"
+            style="display:none;margin-top:16px;border:1px solid var(--border);border-radius:var(--radius);width:450px;height:260px;"
+          ></iframe>
         </div>
       </div>
     </div>
+
+    <dialog id="iframe-dialog" style="
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow: hidden;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      margin: 0;
+    ">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface-2);">
+        <span style="font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);">Fireguard Auth</span>
+        <button
+          onclick="document.getElementById('iframe-dialog').close()"
+          style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;line-height:1;padding:2px 6px;"
+          title="Close"
+        >&times;</button>
+      </div>
+      <div class="dialog-iframe-container" style="display:flex;align-items:center;justify-content:center;"></div>
+    </dialog>
 
     <script type="module" src="src/main.ts"></script>
   </body>

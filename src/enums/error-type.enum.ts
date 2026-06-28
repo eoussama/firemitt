@@ -46,4 +46,11 @@ export enum ErrorType {
    * {@link InvalidDimError}
    */
   InvalidDim = 6,
+
+  /**
+   * Invalid iframe error.
+   *
+   * {@link InvalidIframeError}
+   */
+  InvalidIframe = 7,
 }
