@@ -58,10 +58,43 @@
         letter-spacing: 0.02em;
       }
 
-      header span {
-        color: var(--text-muted);
-        font-size: 13px;
+      .header-meta {
+        display: flex;
+        align-items: center;
+        gap: 14px;
         margin-left: auto;
+      }
+
+      .header-version {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-muted);
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 2px 8px;
+        letter-spacing: 0.04em;
+      }
+
+      .header-link {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: color 0.15s;
+      }
+
+      .header-link:hover {
+        color: var(--accent);
+      }
+
+      .header-link svg {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+        flex-shrink: 0;
       }
 
       .layout {
@@ -105,7 +138,9 @@
       }
 
       input[type="text"],
-      input[type="url"] {
+      input[type="url"],
+      input[type="color"],
+      input[type="number"] {
         width: 100%;
         background: var(--bg);
         border: 1px solid var(--border);
@@ -119,8 +154,28 @@
       }
 
       input[type="text"]:focus,
-      input[type="url"]:focus {
+      input[type="url"]:focus,
+      input[type="color"]:focus,
+      input[type="number"]:focus {
         border-color: var(--accent);
+      }
+
+      input[type="color"] {
+        padding: 3px 6px;
+        height: 34px;
+        cursor: pointer;
+      }
+
+      input.sensitive {
+        color: transparent;
+        text-shadow: 0 0 8px rgba(212, 232, 245, 0.6);
+        transition: border-color 0.15s, color 0.2s, text-shadow 0.2s;
+      }
+
+      input.sensitive:hover,
+      input.sensitive:focus {
+        color: var(--text);
+        text-shadow: none;
       }
 
       .field {
@@ -358,6 +413,17 @@
     <header>
       <img src="https://raw.githubusercontent.com/eoussama/firemitt/refs/heads/main/assets/firemitt.svg" alt="Firemitt Logo" />
       <h1>Firemitt Playground</h1>
+      <div class="header-meta">
+        <span class="header-version">v0.1.6</span>
+        <a class="header-link" href="ous.es/firemitt" target="_blank" rel="noopener" title="Docs">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg>
+          Docs
+        </a>
+        <a class="header-link" href="https://github.com/eoussama/firemitt" target="_blank" rel="noopener" title="GitHub">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          GitHub
+        </a>
+      </div>
     </header>
 
     <div class="layout">
@@ -382,7 +448,20 @@
         </div>
 
         <div class="section">
-          <details open>
+          <div class="section-title">Mode</div>
+          <div class="field">
+            <label for="mode">Auth mode</label>
+            <select id="mode" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:7px 10px;outline:none;font-family:var(--font);">
+              <option value="">popup (default)</option>
+              <option value="iframe">iframe (embedded)</option>
+              <option value="iframe-dialog">iframe (dialog)</option>
+              <option value="iframe-element">iframe (existing element)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section">
+          <details>
             <summary><div class="section-title">App Config</div></summary>
             <div class="details-body">
               <div class="field">
@@ -391,80 +470,85 @@
               </div>
               <div class="field">
                 <label for="logo">Logo URL</label>
-                <input type="url" id="logo" placeholder="https://example.com/logo.png" />
+                <input type="url" id="logo" placeholder="https://example.com/logo.png" list="logo-list" />
+                <datalist id="logo-list">
+                  <option value="https://raw.githubusercontent.com/eoussama/firemitt/refs/heads/main/assets/firemitt.svg"></option>
+                  <option value="https://logodix.com/logo/4057.png"></option>
+                  <option value="https://logodix.com/logo/4094.png"></option>
+                  <option value="https://logodix.com/logo/32422.png"></option>
+                </datalist>
               </div>
               <div class="field">
                 <label for="provider">Auth provider</label>
-                <input type="text" id="provider" placeholder="google" list="provider-list" />
-                <datalist id="provider-list">
-                  <option value="google"></option>
-                  <option value="github"></option>
-                  <option value="facebook"></option>
-                  <option value="twitter"></option>
-                  <option value="microsoft"></option>
-                  <option value="apple"></option>
-                  <option value="yahoo"></option>
-                </datalist>
+                <select id="provider" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:7px 10px;outline:none;font-family:var(--font);">
+                  <option value="google">Google</option>
+                  <option value="github">GitHub</option>
+                  <option value="facebook">Facebook</option>
+                  <option value="twitter">Twitter / X</option>
+                  <option value="microsoft">Microsoft</option>
+                  <option value="apple">Apple</option>
+                  <option value="yahoo">Yahoo</option>
+                </select>
               </div>
               <div class="color-row">
                 <div>
                   <label for="themeText">Text color</label>
-                  <input type="text" id="themeText" placeholder="#1a3544" />
+                  <input type="color" id="themeText" placeholder="#1a3544" value="" />
                 </div>
                 <div>
                   <label for="themePrimary">Primary color</label>
-                  <input type="text" id="themePrimary" placeholder="#ffe536" />
+                  <input type="color" id="themePrimary" placeholder="#ffe536" value="" />
                 </div>
                 <div>
                   <label for="themeSecondary">Secondary color</label>
-                  <input type="text" id="themeSecondary" placeholder="#1a3544" />
+                  <input type="color" id="themeSecondary" placeholder="#1a3544" value="" />
                 </div>
               </div>
               <div class="field">
                 <label for="themeBackground">Background color</label>
-                <input type="text" id="themeBackground" placeholder="#ffffff" />
+                <input type="color" id="themeBackground" placeholder="#ffffff" value="" />
               </div>
             </div>
           </details>
         </div>
 
         <div class="section">
-          <details open>
+          <details>
             <summary><div class="section-title">Firebase Config</div></summary>
             <div class="details-body">
               <div class="field-row">
                 <div>
                   <label for="apiKey">API key <span style="color: var(--error)">*</span></label>
-                  <input type="text" id="apiKey" placeholder="AIzaSy..." />
+                  <input type="text" id="apiKey" placeholder="AIzaSy..." class="sensitive" />
                 </div>
                 <div>
                   <label for="appId">App ID <span style="color: var(--error)">*</span></label>
-                  <input type="text" id="appId" placeholder="1:000:web:abc" />
+                  <input type="text" id="appId" placeholder="1:000:web:abc" class="sensitive" />
                 </div>
               </div>
               <div class="field-row">
                 <div>
                   <label for="projectId">Project ID <span style="color: var(--error)">*</span></label>
-                  <input type="text" id="projectId" placeholder="my-project" />
+                  <input type="text" id="projectId" placeholder="my-project" class="sensitive" />
                 </div>
                 <div>
                   <label for="authDomain">Auth domain <span style="color: var(--error)">*</span></label>
-                  <input type="text" id="authDomain" placeholder="my-project.firebaseapp.com" />
+                  <input type="text" id="authDomain" placeholder="my-project.firebaseapp.com" class="sensitive" />
                 </div>
               </div>
               <div class="field-row">
                 <div>
                   <label for="measurementId">Measurement ID <span style="color: var(--error)">*</span></label>
-                  <input type="text" id="measurementId" placeholder="G-XXXXXXXX" />
+                  <input type="text" id="measurementId" placeholder="G-XXXXXXXX" class="sensitive" />
                 </div>
                 <div>
                   <label for="messagingSenderId">Messaging sender ID <span style="color: var(--error)">*</span></label>
-                  <input type="text" id="messagingSenderId" placeholder="000000000000" />
+                  <input type="text" id="messagingSenderId" placeholder="000000000000" class="sensitive" />
                 </div>
               </div>
               <div class="field">
                 <label for="storageBucket">Storage bucket <span style="color: var(--error)">*</span></label>
-                <input type="text" id="storageBucket" placeholder="my-project.appspot.com" />
+                <input type="text" id="storageBucket" placeholder="my-project.appspot.com" class="sensitive" />
               </div>
             </div>
           </details>
@@ -477,38 +561,25 @@
               <div class="field-row">
                 <div>
                   <label for="dimWidth">Width (px)</label>
-                  <input type="text" id="dimWidth" placeholder="450" />
+                  <input type="number" id="dimWidth" placeholder="450" min="1" step="1" />
                 </div>
                 <div>
                   <label for="dimHeight">Height (px)</label>
-                  <input type="text" id="dimHeight" placeholder="260" />
+                  <input type="number" id="dimHeight" placeholder="260" min="1" step="1" />
                 </div>
               </div>
               <div class="field-row">
                 <div>
                   <label for="posX">Left (px)</label>
-                  <input type="text" id="posX" placeholder="auto" />
+                  <input type="number" id="posX" placeholder="auto" min="0" step="1" />
                 </div>
                 <div>
                   <label for="posY">Top (px)</label>
-                  <input type="text" id="posY" placeholder="50" />
+                  <input type="number" id="posY" placeholder="50" min="0" step="1" />
                 </div>
               </div>
             </div>
           </details>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Mode</div>
-          <div class="field">
-            <label for="mode">Auth mode</label>
-            <select id="mode" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:7px 10px;outline:none;font-family:var(--font);">
-              <option value="">popup (default)</option>
-              <option value="iframe">iframe (embedded)</option>
-              <option value="iframe-dialog">iframe (dialog)</option>
-              <option value="iframe-element">iframe (existing element)</option>
-            </select>
-          </div>
         </div>
 
         <div class="section">
