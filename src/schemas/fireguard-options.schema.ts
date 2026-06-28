@@ -20,6 +20,7 @@ export const FireguardOptionsSchema = z.object({
       text: z.string(),
       primary: z.string(),
       secondary: z.string(),
+      background: z.string(),
     })
     .partial()
     .optional(),

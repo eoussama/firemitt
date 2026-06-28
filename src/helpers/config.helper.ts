@@ -96,6 +96,7 @@ export class ConfigHelper {
       text: config?.theme?.text || "#1a3544",
       primary: config?.theme?.primary || "#ffe536",
       secondary: config?.theme?.secondary || "#1a3544",
+      background: config?.theme?.background || "#ffffff",
     };
 
     const firebase = config?.firebase ?? {

@@ -8,4 +8,4 @@
  *
  * @property {'primary' | 'secondary' | 'text'} - The color type, which can be either 'primary', 'secondary', or 'text'.
  */
-export type TColor = "primary" | "secondary" | "text";
+export type TColor = "primary" | "secondary" | "text" | "background";

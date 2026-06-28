@@ -26,6 +26,7 @@ function readForm(): TFormValues {
     themeText: getField("themeText").value.trim(),
     themePrimary: getField("themePrimary").value.trim(),
     themeSecondary: getField("themeSecondary").value.trim(),
+    themeBackground: getField("themeBackground").value.trim(),
     dimWidth: getField("dimWidth").value.trim(),
     dimHeight: getField("dimHeight").value.trim(),
     posX: getField("posX").value.trim(),
@@ -56,6 +57,7 @@ function applyPreset(preset: Partial<TFormValues>): void {
     themeText: "",
     themePrimary: "",
     themeSecondary: "",
+    themeBackground: "",
     dimWidth: "",
     dimHeight: "",
     posX: "",
@@ -156,12 +158,13 @@ async function runAuth(): Promise<void> {
       name: values.name,
       ...(values.logo ? { logo: values.logo } : {}),
       provider: values.provider.toLowerCase() || "google",
-      ...(values.themeText && values.themePrimary && values.themeSecondary
+      ...(values.themeText || values.themePrimary || values.themeSecondary || values.themeBackground
         ? {
             theme: {
-              text: values.themeText,
-              primary: values.themePrimary,
-              secondary: values.themeSecondary,
+              ...(values.themeText ? { text: values.themeText } : {}),
+              ...(values.themePrimary ? { primary: values.themePrimary } : {}),
+              ...(values.themeSecondary ? { secondary: values.themeSecondary } : {}),
+              ...(values.themeBackground ? { background: values.themeBackground } : {}),
             },
           }
         : {}),
