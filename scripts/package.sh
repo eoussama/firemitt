@@ -6,4 +6,4 @@ mkdir pkg
 cp LICENSE pkg
 cp README.md pkg
 cp package.json pkg
-cp -r dist/* pkg
+cp -r dist pkg/dist

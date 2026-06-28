@@ -1,7 +1,7 @@
 {
   "name": "@eoussama/firemitt",
   "type": "module",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "packageManager": "pnpm@11.9.0",
   "description": "Yes, fireguards are hot, but not enough to burn. Intermediate package that facilitates working with Fireguard.",
   "author": {
@@ -31,7 +31,7 @@
       "require": "./dist/firemitt.umd.js"
     }
   },
-  "main": "firemitt.es.js",
+  "main": "./dist/firemitt.es.js",
   "files": [
     "LICENSE",
     "README.md",
