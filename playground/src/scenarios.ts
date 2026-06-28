@@ -36,6 +36,50 @@ export const SCENARIOS: readonly TScenario[] = [
     },
   },
   {
+    label: "GitHub provider",
+    description: "Uses GitHub as the auth provider instead of the default Google.",
+    preset: {
+      name: "Test App",
+      provider: "github",
+    },
+  },
+  {
+    label: "Custom theme",
+    description: "Passes custom theme colors to the Fireguard UI alongside a logo URL.",
+    preset: {
+      name: "Branded App",
+      logo: "../assets/logo.svg",
+      themeText: "#79531a",
+      themePrimary: "#ee16cc",
+      themeSecondary: "#12ff32",
+      themeBackground: "#0d1b24",
+    },
+  },
+    {
+    label: "Iframe embed (auto-create)",
+    description: "Opens Fireguard embedded in an iframe created inside the result panel. Uses mode: \"iframe\" with a container.",
+    preset: {
+      name: "Test App",
+      mode: "iframe",
+    },
+  },
+  {
+    label: "Iframe embed (dialog)",
+    description: "Opens Fireguard embedded in an iframe inside a modal <dialog>. The dialog closes automatically when auth resolves or rejects.",
+    preset: {
+      name: "Test App",
+      mode: "iframe-dialog",
+    },
+  },
+  {
+    label: "Iframe embed (existing element)",
+    description: "Reuses a persistent <iframe> element already in the DOM. Fireguard is loaded into it without Firemitt managing its lifecycle.",
+    preset: {
+      name: "Test App",
+      mode: "iframe-element",
+    },
+  },
+  {
     label: "Missing URL",
     description: "The url field is empty. ConfigHelper should throw InvalidURLError immediately.",
     preset: {
@@ -81,26 +125,6 @@ export const SCENARIOS: readonly TScenario[] = [
     },
   },
   {
-    label: "GitHub provider",
-    description: "Uses GitHub as the auth provider instead of the default Google.",
-    preset: {
-      name: "Test App",
-      provider: "github",
-    },
-  },
-  {
-    label: "Custom theme",
-    description: "Passes custom theme colors to the Fireguard UI alongside a logo URL.",
-    preset: {
-      name: "Branded App",
-      logo: "../assets/logo.svg",
-      themeText: "#79531a",
-      themePrimary: "#ee16cc",
-      themeSecondary: "#12ff32",
-      themeBackground: "#0d1b24",
-    },
-  },
-  {
     label: "Custom dimensions",
     description: "Overrides the popup width/height and position.",
     preset: {
@@ -119,29 +143,5 @@ export const SCENARIOS: readonly TScenario[] = [
       dimWidth: "wide",
       dimHeight: "tall",
     },
-  },
-  {
-    label: "Iframe embed (auto-create)",
-    description: "Opens Fireguard embedded in an iframe created inside the result panel. Uses mode: \"iframe\" with a container.",
-    preset: {
-      name: "Test App",
-      mode: "iframe",
-    },
-  },
-  {
-    label: "Iframe embed (dialog)",
-    description: "Opens Fireguard embedded in an iframe inside a modal <dialog>. The dialog closes automatically when auth resolves or rejects.",
-    preset: {
-      name: "Test App",
-      mode: "iframe-dialog",
-    },
-  },
-  {
-    label: "Iframe embed (existing element)",
-    description: "Reuses a persistent <iframe> element already in the DOM. Fireguard is loaded into it without Firemitt managing its lifecycle.",
-    preset: {
-      name: "Test App",
-      mode: "iframe-element",
-    },
-  },
+  }
 ];

@@ -105,7 +105,8 @@
       }
 
       input[type="text"],
-      input[type="url"] {
+      input[type="url"],
+      input[type="color"] {
         width: 100%;
         background: var(--bg);
         border: 1px solid var(--border);
@@ -119,8 +120,27 @@
       }
 
       input[type="text"]:focus,
-      input[type="url"]:focus {
+      input[type="url"]:focus,
+      input[type="color"]:focus {
         border-color: var(--accent);
+      }
+
+      input[type="color"] {
+        padding: 3px 6px;
+        height: 34px;
+        cursor: pointer;
+      }
+
+      input.sensitive {
+        color: transparent;
+        text-shadow: 0 0 8px rgba(212, 232, 245, 0.6);
+        transition: border-color 0.15s, color 0.2s, text-shadow 0.2s;
+      }
+
+      input.sensitive:hover,
+      input.sensitive:focus {
+        color: var(--text);
+        text-shadow: none;
       }
 
       .field {
@@ -382,7 +402,20 @@
         </div>
 
         <div class="section">
-          <details open>
+          <div class="section-title">Mode</div>
+          <div class="field">
+            <label for="mode">Auth mode</label>
+            <select id="mode" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:7px 10px;outline:none;font-family:var(--font);">
+              <option value="">popup (default)</option>
+              <option value="iframe">iframe (embedded)</option>
+              <option value="iframe-dialog">iframe (dialog)</option>
+              <option value="iframe-element">iframe (existing element)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section">
+          <details>
             <summary><div class="section-title">App Config</div></summary>
             <div class="details-body">
               <div class="field">
@@ -391,7 +424,13 @@
               </div>
               <div class="field">
                 <label for="logo">Logo URL</label>
-                <input type="url" id="logo" placeholder="https://example.com/logo.png" />
+                <input type="url" id="logo" placeholder="https://example.com/logo.png" list="logo-list" />
+                <datalist id="logo-list">
+                  <option value="https://raw.githubusercontent.com/eoussama/firemitt/refs/heads/main/assets/firemitt.svg"></option>
+                  <option value="https://logodix.com/logo/4057.png"></option>
+                  <option value="https://logodix.com/logo/4094.png"></option>
+                  <option value="https://logodix.com/logo/32422.png"></option>
+                </datalist>
               </div>
               <div class="field">
                 <label for="provider">Auth provider</label>
@@ -409,62 +448,62 @@
               <div class="color-row">
                 <div>
                   <label for="themeText">Text color</label>
-                  <input type="text" id="themeText" placeholder="#1a3544" />
+                  <input type="color" id="themeText" placeholder="#1a3544" value="" />
                 </div>
                 <div>
                   <label for="themePrimary">Primary color</label>
-                  <input type="text" id="themePrimary" placeholder="#ffe536" />
+                  <input type="color" id="themePrimary" placeholder="#ffe536" value="" />
                 </div>
                 <div>
                   <label for="themeSecondary">Secondary color</label>
-                  <input type="text" id="themeSecondary" placeholder="#1a3544" />
+                  <input type="color" id="themeSecondary" placeholder="#1a3544" value="" />
                 </div>
               </div>
               <div class="field">
                 <label for="themeBackground">Background color</label>
-                <input type="text" id="themeBackground" placeholder="#ffffff" />
+                <input type="color" id="themeBackground" placeholder="#ffffff" value="" />
               </div>
             </div>
           </details>
         </div>
 
         <div class="section">
-          <details open>
+          <details>
             <summary><div class="section-title">Firebase Config</div></summary>
             <div class="details-body">
               <div class="field-row">
                 <div>
                   <label for="apiKey">API key <span style="color: var(--error)">*</span></label>
-                  <input type="text" id="apiKey" placeholder="AIzaSy..." />
+                  <input type="text" id="apiKey" placeholder="AIzaSy..." class="sensitive" />
                 </div>
                 <div>
                   <label for="appId">App ID <span style="color: var(--error)">*</span></label>
-                  <input type="text" id="appId" placeholder="1:000:web:abc" />
+                  <input type="text" id="appId" placeholder="1:000:web:abc" class="sensitive" />
                 </div>
               </div>
               <div class="field-row">
                 <div>
                   <label for="projectId">Project ID <span style="color: var(--error)">*</span></label>
-                  <input type="text" id="projectId" placeholder="my-project" />
+                  <input type="text" id="projectId" placeholder="my-project" class="sensitive" />
                 </div>
                 <div>
                   <label for="authDomain">Auth domain <span style="color: var(--error)">*</span></label>
-                  <input type="text" id="authDomain" placeholder="my-project.firebaseapp.com" />
+                  <input type="text" id="authDomain" placeholder="my-project.firebaseapp.com" class="sensitive" />
                 </div>
               </div>
               <div class="field-row">
                 <div>
                   <label for="measurementId">Measurement ID <span style="color: var(--error)">*</span></label>
-                  <input type="text" id="measurementId" placeholder="G-XXXXXXXX" />
+                  <input type="text" id="measurementId" placeholder="G-XXXXXXXX" class="sensitive" />
                 </div>
                 <div>
                   <label for="messagingSenderId">Messaging sender ID <span style="color: var(--error)">*</span></label>
-                  <input type="text" id="messagingSenderId" placeholder="000000000000" />
+                  <input type="text" id="messagingSenderId" placeholder="000000000000" class="sensitive" />
                 </div>
               </div>
               <div class="field">
                 <label for="storageBucket">Storage bucket <span style="color: var(--error)">*</span></label>
-                <input type="text" id="storageBucket" placeholder="my-project.appspot.com" />
+                <input type="text" id="storageBucket" placeholder="my-project.appspot.com" class="sensitive" />
               </div>
             </div>
           </details>
@@ -496,19 +535,6 @@
               </div>
             </div>
           </details>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Mode</div>
-          <div class="field">
-            <label for="mode">Auth mode</label>
-            <select id="mode" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:7px 10px;outline:none;font-family:var(--font);">
-              <option value="">popup (default)</option>
-              <option value="iframe">iframe (embedded)</option>
-              <option value="iframe-dialog">iframe (dialog)</option>
-              <option value="iframe-element">iframe (existing element)</option>
-            </select>
-          </div>
         </div>
 
         <div class="section">
