@@ -78,22 +78,14 @@ export const SCENARIOS: readonly TScenario[] = [
     },
   },
   {
-    label: "Localhost URL",
-    description: "Points to a locally running Fireguard instance. Useful when self-hosting.",
-    preset: {
-      url: "http://localhost:3000",
-      name: "Test App",
-    },
-  },
-  {
     label: "Custom theme",
     description: "Passes custom theme colors to the Fireguard UI alongside a logo URL.",
     preset: {
       name: "Branded App",
       logo: "../assets/logo.svg",
-      themeText: "#ffffff",
+      themeText: "#79531a",
       themePrimary: "#ee16cc",
-      themeSecondary: "#ff12ee",
+      themeSecondary: "#12ff32",
     },
   },
   {

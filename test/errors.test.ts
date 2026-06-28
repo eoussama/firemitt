@@ -3,6 +3,7 @@ import {
   ErrorType,
   InvalidAppError,
   InvalidAppNameError,
+  InvalidDimError,
   InvalidFirebaseConfigError,
   InvalidProviderError,
   InvalidURLError,
@@ -118,6 +119,30 @@ describe("tests InvalidProviderError", () => {
   it("toObject should return serialized error", () => {
     expect(error.toObject()).toEqual({
       type: ErrorType.InvalidProvider,
+      name: error.name,
+      message: error.message,
+    });
+  });
+});
+
+describe("tests InvalidDimError", () => {
+  const error = new InvalidDimError();
+
+  it("should have the correct name", () => {
+    expect(error.name).toBe("InvalidDimError");
+  });
+
+  it("should have the correct type", () => {
+    expect(error.type).toBe(ErrorType.InvalidDim);
+  });
+
+  it("toString should return formatted message", () => {
+    expect(error.toString()).toBe(`[${error.name}] ${error.message}.`);
+  });
+
+  it("toObject should return serialized error", () => {
+    expect(error.toObject()).toEqual({
+      type: ErrorType.InvalidDim,
       name: error.name,
       message: error.message,
     });

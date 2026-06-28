@@ -12,6 +12,7 @@ import {
   FireguardOptionsSchema,
   FiremittOptionsSchema,
   InvalidAppNameError,
+  InvalidDimError,
   InvalidFirebaseConfigError,
   InvalidURLError,
 } from "..";
@@ -39,6 +40,10 @@ export class ConfigHelper {
   private static getDim(width: TUnsafe<number>, height: TUnsafe<number>): TDim {
     const w = Number.parseFloat((width ?? 450).toString());
     const h = Number.parseFloat((height ?? 260).toString());
+
+    if (Number.isNaN(w) || Number.isNaN(h)) {
+      throw new InvalidDimError();
+    }
 
     return { width: w, height: h };
   }
