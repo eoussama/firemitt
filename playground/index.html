@@ -106,7 +106,8 @@
 
       input[type="text"],
       input[type="url"],
-      input[type="color"] {
+      input[type="color"],
+      input[type="number"] {
         width: 100%;
         background: var(--bg);
         border: 1px solid var(--border);
@@ -121,7 +122,8 @@
 
       input[type="text"]:focus,
       input[type="url"]:focus,
-      input[type="color"]:focus {
+      input[type="color"]:focus,
+      input[type="number"]:focus {
         border-color: var(--accent);
       }
 
@@ -515,21 +517,21 @@
               <div class="field-row">
                 <div>
                   <label for="dimWidth">Width (px)</label>
-                  <input type="text" id="dimWidth" placeholder="450" />
+                  <input type="number" id="dimWidth" placeholder="450" min="1" step="1" />
                 </div>
                 <div>
                   <label for="dimHeight">Height (px)</label>
-                  <input type="text" id="dimHeight" placeholder="260" />
+                  <input type="number" id="dimHeight" placeholder="260" min="1" step="1" />
                 </div>
               </div>
               <div class="field-row">
                 <div>
                   <label for="posX">Left (px)</label>
-                  <input type="text" id="posX" placeholder="auto" />
+                  <input type="number" id="posX" placeholder="auto" min="0" step="1" />
                 </div>
                 <div>
                   <label for="posY">Top (px)</label>
-                  <input type="text" id="posY" placeholder="50" />
+                  <input type="number" id="posY" placeholder="50" min="0" step="1" />
                 </div>
               </div>
             </div>

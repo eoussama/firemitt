@@ -135,13 +135,4 @@ export const SCENARIOS: readonly TScenario[] = [
       posY: "100",
     },
   },
-  {
-    label: "Non-numeric dimensions",
-    description: "Passes non-numeric strings for width/height. parseFloat coerces them to NaN.",
-    preset: {
-      name: "Test App",
-      dimWidth: "wide",
-      dimHeight: "tall",
-    },
-  }
 ];
