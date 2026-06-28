@@ -33,6 +33,7 @@ export const SCENARIOS: readonly TScenario[] = [
     description: "All required fields are present and valid. Should open the Fireguard popup and complete auth.",
     preset: {
       name: "Test App",
+      provider: "google",
     },
   },
   {
@@ -55,7 +56,18 @@ export const SCENARIOS: readonly TScenario[] = [
       themeBackground: "#0d1b24",
     },
   },
-    {
+  {
+    label: "Custom dimensions",
+    description: "Overrides the popup width/height and position.",
+    preset: {
+      name: "Test App",
+      dimWidth: "600",
+      dimHeight: "400",
+      posX: "100",
+      posY: "100",
+    },
+  },
+  {
     label: "Iframe embed (auto-create)",
     description: "Opens Fireguard embedded in an iframe created inside the result panel. Uses mode: \"iframe\" with a container.",
     preset: {
@@ -122,17 +134,6 @@ export const SCENARIOS: readonly TScenario[] = [
       measurementId: "",
       storageBucket: "",
       messagingSenderId: "",
-    },
-  },
-  {
-    label: "Custom dimensions",
-    description: "Overrides the popup width/height and position.",
-    preset: {
-      name: "Test App",
-      dimWidth: "600",
-      dimHeight: "400",
-      posX: "100",
-      posY: "100",
     },
   },
 ];

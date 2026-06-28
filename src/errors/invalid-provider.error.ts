@@ -12,7 +12,7 @@ import { BaseError } from "./base.error";
  */
 export class InvalidProviderError extends BaseError {
   /**
-   * Creates a ne0w instance of the InvalidProviderError class with a specific error message.
+   * Creates a new instance of the InvalidProviderError class with a specific error message.
    *
    * @param providerName The invalid provider name that caused the error.
    */

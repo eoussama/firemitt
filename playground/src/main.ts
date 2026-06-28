@@ -280,6 +280,12 @@ function init(): void {
   seedFromEnv();
   syncUrlChips(DEFAULT_FIREGUARD_URL);
 
+  const firstScenario = document.querySelector<HTMLButtonElement>(".scenario-btn");
+
+  if (firstScenario) {
+    firstScenario.click();
+  }
+
   getField("url").addEventListener("input", () => {
     syncUrlChips(getField("url").value.trim());
   });
