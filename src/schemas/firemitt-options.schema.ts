@@ -37,4 +37,11 @@ export const FiremittOptionsSchema = z.object({
     })
     .optional(),
   config: FireguardOptionsSchema.partial().optional(),
+  mode: z.enum(["popup", "iframe"]).optional(),
+  iframe: z
+    .union([
+      z.object({ element: z.custom<HTMLIFrameElement>(), container: z.never().optional() }),
+      z.object({ container: z.custom<HTMLElement>(), element: z.never().optional() }),
+    ])
+    .optional(),
 });

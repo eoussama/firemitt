@@ -1,6 +1,6 @@
 import type { TFiremittOptions } from "../types/firemitt-options.type";
 import { ConfigHelper, EventHelper } from ".";
-import { EventType } from "..";
+import { EventType, InvalidIframeError } from "..";
 
 
 
@@ -23,26 +23,71 @@ const CLOSED_POLL_INTERVAL = 500;
  */
 export class FiremittHelper {
   /**
-   * Initiates authentication using Firemitt options.
+   * Runs the shared event-driven auth flow against an already-initialized `EventHelper` target.
+   * Resolves with the token on success, rejects on failure or close.
+   * The `cleanup` callback is invoked once the promise settles (regardless of outcome).
    *
-   * This static method opens a new window with the Firemitt URL and sets up event listeners to handle the authentication process.
-   * It listens for authentication success or failure events and resolves or rejects the promise accordingly.
-   *
-   * @param {TFiremittOptions} options - The options required to configure and initiate the Firemitt authentication process.
-   * @returns {Promise<string>} A promise that resolves with the authentication token on success, or rejects with an error on failure.
+   * @param fireguardConfig - The Fireguard config to send after the Loaded event.
+   * @param cleanup - Teardown to run after settling.
+   * @returns A promise that resolves with the authentication token or rejects with an error.
    */
-  static auth(options: TFiremittOptions): Promise<string> {
+  /* v8 ignore next */
+  private static runSession(
+    fireguardConfig: ReturnType<typeof ConfigHelper.init>["fireguard"],
+    cleanup: () => void,
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      let settled = false;
+
+      const settle = (fn: () => void) => {
+        if (!settled) {
+          settled = true;
+          cleanup();
+          fn();
+        }
+      };
+
+      const handleLoaded = () => {
+        EventHelper
+          .send(EventType.Config, fireguardConfig)
+          .on<{ token: string }>(EventType.AuthSucceded, (data) => {
+            settle(() => resolve(data!.token));
+          })
+          .on<{ error: string }>(EventType.AuthFailed, (data) => {
+            settle(() => reject(data!.error));
+          })
+          .on(EventType.Closed, () => {
+            settle(() => reject(new Error("The authentication window was closed.")));
+          });
+
+        EventHelper.on(EventType.Loaded, handleLoaded);
+      };
+
+      EventHelper
+        .on(EventType.Loaded, handleLoaded)
+        .on(EventType.Retry, () => {});
+    });
+  }
+
+  /**
+   * Initiates authentication using a popup window.
+   *
+   * @param options - The options required to configure and initiate the Firemitt authentication process.
+   * @returns A promise that resolves with the authentication token on success, or rejects with an error on failure.
+   */
+  private static authPopup(options: TFiremittOptions): Promise<string> {
     const config = ConfigHelper.init(options);
     const flags = ConfigHelper.getFlags(config);
     const win = window.open(config.url, "_blank", flags) as Window;
 
-    return new Promise((resolve, reject) => {
-      if (!EventHelper.init(win)) {
-        return;
-      }
+    if (!EventHelper.init(win)) {
+      return new Promise(() => {});
+    }
 
+    let closedPoller: ReturnType<typeof setInterval>;
+
+    const promise = new Promise<string>((resolve, reject) => {
       let settled = false;
-      let closedPoller: ReturnType<typeof setInterval>;
 
       const settle = (fn: () => void) => {
         if (!settled) {
@@ -78,5 +123,77 @@ export class FiremittHelper {
         .on(EventType.Loaded, handleLoaded)
         .on(EventType.Retry, () => {});
     });
+
+    return promise;
+  }
+
+  /**
+   * Initiates authentication by embedding Fireguard inside an iframe.
+   * Uses a caller-provided iframe element, or creates one inside the provided container.
+   *
+   * @param options - The options required to configure and initiate the Firemitt authentication process.
+   * @returns A promise that resolves with the authentication token on success, or rejects with an error on failure.
+   * @throws {InvalidIframeError} If neither an iframe element nor a container is provided.
+   */
+  private static authIframe(options: TFiremittOptions): Promise<string> {
+    const { iframe: iframeOpts } = options;
+
+    if (!iframeOpts?.element && !iframeOpts?.container) {
+      throw new InvalidIframeError();
+    }
+
+    const config = ConfigHelper.init(options);
+
+    let iframe: HTMLIFrameElement;
+    let owned = false;
+
+    if (iframeOpts.element) {
+      iframe = iframeOpts.element;
+    }
+    else {
+      iframe = document.createElement("iframe");
+      owned = true;
+      iframeOpts.container!.appendChild(iframe);
+    }
+
+    iframe.src = config.url;
+
+    const cleanup = () => {
+      if (owned && iframe.parentNode) {
+        iframe.parentNode.removeChild(iframe);
+      }
+    };
+
+    return new Promise<string>((resolve, reject) => {
+      iframe.addEventListener("load", () => {
+        const win = iframe.contentWindow;
+
+        if (!win || !EventHelper.init(win)) {
+          cleanup();
+          reject(new Error("Could not access the iframe window."));
+
+          return;
+        }
+
+        FiremittHelper.runSession(config.fireguard, cleanup).then(resolve, reject);
+      }, { once: true });
+    });
+  }
+
+  /**
+   * Initiates authentication using Firemitt options.
+   *
+   * Depending on the `mode` field in `options`, this either opens a popup window (default)
+   * or embeds Fireguard inside an iframe.
+   *
+   * @param {TFiremittOptions} options - The options required to configure and initiate the Firemitt authentication process.
+   * @returns {Promise<string>} A promise that resolves with the authentication token on success, or rejects with an error on failure.
+   */
+  static auth(options: TFiremittOptions): Promise<string> {
+    if (options.mode === "iframe") {
+      return FiremittHelper.authIframe(options);
+    }
+
+    return FiremittHelper.authPopup(options);
   }
 }

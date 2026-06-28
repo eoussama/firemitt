@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { Base64helper, EventType, FiremittHelper } from "../src/index.ts";
+import { Base64helper, EventType, FiremittHelper, InvalidIframeError } from "../src/index.ts";
 import { VALID_FIREBASE } from "./fixtures.ts";
 
 
@@ -32,7 +32,7 @@ describe("tests FiremittHelper", () => {
     } as unknown as Window & typeof globalThis;
   });
 
-  describe("auth", () => {
+  describe("auth (popup mode)", () => {
     it("should resolve with token on successful authentication", async () => {
       const authPromise = FiremittHelper.auth(BASE_OPTIONS);
 
@@ -215,6 +215,265 @@ describe("tests FiremittHelper", () => {
       messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
 
       await expect(authPromise).resolves.toBe("retry-token");
+    });
+  });
+
+  describe("auth (iframe mode)", () => {
+    let iframeWin: { postMessage: ReturnType<typeof vi.fn> };
+    let mockIframe: {
+      src: string;
+      contentWindow: typeof iframeWin;
+      parentNode: { removeChild: ReturnType<typeof vi.fn> } | null;
+      addEventListener: ReturnType<typeof vi.fn>;
+    };
+    let loadHandler: (() => void) | undefined;
+
+    beforeEach(() => {
+      iframeWin = { postMessage: vi.fn() };
+      loadHandler = undefined;
+
+      mockIframe = {
+        src: "",
+        contentWindow: iframeWin,
+        parentNode: { removeChild: vi.fn() },
+        addEventListener: vi.fn((event: string, handler: () => void) => {
+          if (event === "load") {
+            loadHandler = handler;
+          }
+        }),
+      };
+
+      (globalThis.window as unknown as {
+        addEventListener: ReturnType<typeof vi.fn>;
+      }).addEventListener = vi.fn((_, handler: (e: MessageEvent) => void) => {
+        messageListeners.push(handler);
+      });
+    });
+
+    it("should throw InvalidIframeError when neither element nor container is given", () => {
+      expect(() =>
+        FiremittHelper.auth({ ...BASE_OPTIONS, mode: "iframe" }),
+      ).toThrow(InvalidIframeError);
+    });
+
+    it("should resolve with token using a provided iframe element", async () => {
+      const authPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { element: mockIframe as unknown as HTMLIFrameElement },
+      });
+
+      expect(mockIframe.src).toBe("https://fireguard-instance.com/");
+
+      loadHandler!();
+
+      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
+
+      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "iframe-token" } });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
+
+      await expect(authPromise).resolves.toBe("iframe-token");
+    });
+
+    it("should reject on AuthFailed when using a provided iframe element", async () => {
+      const authPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { element: mockIframe as unknown as HTMLIFrameElement },
+      });
+
+      loadHandler!();
+
+      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
+
+      const failMsg = Base64helper.encode({ type: EventType.AuthFailed, payload: { error: "iframe_error" } });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: failMsg } as MessageEvent));
+
+      await expect(authPromise).rejects.toBe("iframe_error");
+    });
+
+    it("should reject on Closed event when using a provided iframe element", async () => {
+      const authPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { element: mockIframe as unknown as HTMLIFrameElement },
+      });
+
+      loadHandler!();
+
+      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
+
+      const closedMsg = Base64helper.encode({ type: EventType.Closed, payload: {} });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: closedMsg } as MessageEvent));
+
+      await expect(authPromise).rejects.toThrow("The authentication window was closed.");
+    });
+
+    it("should not remove a caller-provided iframe element on settle", async () => {
+      const authPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { element: mockIframe as unknown as HTMLIFrameElement },
+      });
+
+      loadHandler!();
+
+      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
+
+      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "no-remove-token" } });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
+
+      await expect(authPromise).resolves.toBe("no-remove-token");
+
+      expect((mockIframe.parentNode as { removeChild: ReturnType<typeof vi.fn> }).removeChild).not.toHaveBeenCalled();
+    });
+
+    it("should create an iframe inside the container and remove it on success", async () => {
+      const createdIframe = {
+        src: "",
+        contentWindow: iframeWin,
+        parentNode: { removeChild: vi.fn() },
+        addEventListener: vi.fn((event: string, handler: () => void) => {
+          if (event === "load") {
+            loadHandler = handler;
+          }
+        }),
+      };
+
+      const container = { appendChild: vi.fn() };
+
+      globalThis.document = {
+        createElement: vi.fn(() => createdIframe),
+      } as unknown as Document;
+
+      const authPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { container: container as unknown as HTMLElement },
+      });
+
+      expect(container.appendChild).toHaveBeenCalledWith(createdIframe);
+      expect(createdIframe.src).toBe("https://fireguard-instance.com/");
+
+      loadHandler!();
+
+      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
+
+      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "container-token" } });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
+
+      await expect(authPromise).resolves.toBe("container-token");
+
+      expect(createdIframe.parentNode.removeChild).toHaveBeenCalledWith(createdIframe);
+    });
+
+    it("should create an iframe inside the container and remove it on failure", async () => {
+      const createdIframe = {
+        src: "",
+        contentWindow: iframeWin,
+        parentNode: { removeChild: vi.fn() },
+        addEventListener: vi.fn((event: string, handler: () => void) => {
+          if (event === "load") {
+            loadHandler = handler;
+          }
+        }),
+      };
+
+      const container = { appendChild: vi.fn() };
+
+      globalThis.document = {
+        createElement: vi.fn(() => createdIframe),
+      } as unknown as Document;
+
+      const authPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { container: container as unknown as HTMLElement },
+      });
+
+      loadHandler!();
+
+      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
+
+      const failMsg = Base64helper.encode({ type: EventType.AuthFailed, payload: { error: "container-fail" } });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: failMsg } as MessageEvent));
+
+      await expect(authPromise).rejects.toBe("container-fail");
+
+      expect(createdIframe.parentNode.removeChild).toHaveBeenCalledWith(createdIframe);
+    });
+
+    it("should ignore a second settle attempt in iframe mode (double-settle guard)", async () => {
+      const authPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { element: mockIframe as unknown as HTMLIFrameElement },
+      });
+
+      loadHandler!();
+
+      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
+
+      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "first-settle" } });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
+
+      const failMsg = Base64helper.encode({ type: EventType.AuthFailed, payload: { error: "late-settle" } });
+
+      messageListeners.forEach(h => h({ isTrusted: true, data: failMsg } as MessageEvent));
+
+      await expect(authPromise).resolves.toBe("first-settle");
+    });
+
+    it("should reject and clean up when contentWindow is null after load", async () => {
+      const nullWinIframe = {
+        src: "",
+        contentWindow: null,
+        parentNode: { removeChild: vi.fn() },
+        addEventListener: vi.fn((event: string, handler: () => void) => {
+          if (event === "load") {
+            loadHandler = handler;
+          }
+        }),
+      };
+
+      const container = { appendChild: vi.fn() };
+
+      globalThis.document = {
+        createElement: vi.fn(() => nullWinIframe),
+      } as unknown as Document;
+
+      const authPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { container: container as unknown as HTMLElement },
+      });
+
+      loadHandler!();
+
+      await expect(authPromise).rejects.toThrow("Could not access the iframe window.");
+
+      expect(nullWinIframe.parentNode.removeChild).toHaveBeenCalledWith(nullWinIframe);
     });
   });
 });
