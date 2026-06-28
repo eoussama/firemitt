@@ -17,16 +17,32 @@ import { Base64helper } from ".";
  */
 export class EventHelper {
   private static target: Window;
+  private static handlers: Set<(e: MessageEvent) => void> = new Set();
+
+  /**
+   * Removes all active message listeners registered by this helper.
+   * Called before each new session to prevent stale handlers from a previous
+   * auth call from intercepting events meant for the new popup.
+   */
+  private static cleanup(): void {
+    for (const handler of this.handlers) {
+      window.removeEventListener("message", handler);
+    }
+
+    this.handlers.clear();
+  }
 
   /**
    * Initializes the EventHelper with a target window.
    *
    * This method sets the target window where the messages will be posted to.
+   * Any listeners registered during a previous session are removed first.
    *
    * @param {Window} target - The target window to which messages will be sent.
    * @returns {boolean} Returns true if the target is successfully set, otherwise false.
    */
   static init(target: Window): boolean {
+    this.cleanup();
     this.target = target;
 
     return Boolean(this.target);
@@ -70,10 +86,12 @@ export class EventHelper {
         if (message.type === type) {
           func(message.payload as T);
           window.removeEventListener("message", handler);
+          this.handlers.delete(handler);
         }
       }
     };
 
+    this.handlers.add(handler);
     window.addEventListener("message", handler);
 
     return this;
