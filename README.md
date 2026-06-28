@@ -20,15 +20,17 @@
 
 ## Description
 
-Firemitt is a client-side integration package for [Fireguard](https://github.com/EOussama/fireguard), a Firebase authentication middleman app. It handles the full lifecycle of a popup-based auth flow: opening the Fireguard window, passing configuration, and resolving or rejecting based on the authentication result.
+Firemitt is a client-side integration package for [Fireguard](https://github.com/EOussama/fireguard), a Firebase authentication middleman app. It handles the full lifecycle of an auth flow: opening the Fireguard window (popup or iframe), passing configuration, and resolving or rejecting based on the authentication result.
 
 It is particularly useful for browser extensions and web apps operating under Manifest V3 restrictions, where direct Firebase SDK usage is limited or blocked.
 
 ## Features
 
-- **Popup authentication**: `FiremittHelper.auth` opens a Fireguard window, manages the auth handshake, and returns a promise that resolves with the token on success or rejects on failure.
-- **Flexible configuration**: Control the popup position, dimensions, app name, logo, Firebase credentials, and theme with a single options object.
-- **Custom theming**: Pass primary, secondary, and text colors to style the Fireguard UI to match your app.
+- **Popup authentication**: `FiremittHelper.auth` opens a Fireguard popup window, manages the auth handshake, and returns a promise that resolves with the token on success or rejects on failure.
+- **Iframe authentication**: Optionally embed Fireguard inside an iframe by setting `mode: "iframe"`. Provide an existing iframe element or a container element and Firemitt manages the lifecycle.
+- **Flexible configuration**: Control the popup position, dimensions, app name, logo, Firebase credentials, auth provider, and theme with a single options object.
+- **Custom theming**: Pass primary, secondary, text, and background colors to style the Fireguard UI to match your app.
+- **Multiple auth providers**: Choose from Google, GitHub, Facebook, Twitter, Microsoft, Apple, or Yahoo via the `provider` field.
 - **Event-driven internals**: `EventHelper` provides a clean interface for sending and receiving cross-window events used by the auth flow.
 - **Config validation**: `ConfigHelper` validates and normalizes Fireguard options before they are used, catching missing or malformed values early.
 
@@ -40,7 +42,7 @@ pnpm add @eoussama/firemitt
 
 ## Usage
 
-### Authentication
+### Popup authentication
 
 `FiremittHelper.auth` is the main entry point. It opens a Fireguard popup window, passes your configuration to it, and returns a promise that resolves with the auth token on success.
 
@@ -67,14 +69,18 @@ const options = {
   config: {
     name: "My App Name",
 
+    // Optional: authentication provider (default: "google")
+    provider: "google",
+
     // Optional: URL to your app's logo
     logo: "https://url/to/your/logo/image",
 
     // Optional: custom theme colors
     theme: {
-      text: "grey",
-      primary: "#ee16cc",
-      secondary: "#ff12ee"
+      text: "#1a3544",
+      primary: "#ffe536",
+      secondary: "#1a3544",
+      background: "#ffffff"
     },
 
     // Your web app's Firebase configuration
@@ -92,11 +98,33 @@ const options = {
 
 FiremittHelper.auth(options)
   .then((token) => {
-    console.warn("Authentication successful!", token);
+    console.log("Authentication successful!", token);
   })
   .catch((error) => {
     console.error("Authentication failed:", error);
   });
+```
+
+### Iframe authentication
+
+Set `mode: "iframe"` and provide either a `container` (Firemitt creates and manages the iframe) or an existing `element` (Firemitt loads Fireguard into it without managing its lifecycle).
+
+```ts
+// Auto-created iframe inside a container element
+FiremittHelper.auth({
+  url: "https://ouss.es/fireguard",
+  mode: "iframe",
+  iframe: { container: document.getElementById("auth-container")! },
+  config: { name: "My App", firebase: { /* ... */ } }
+});
+
+// Existing iframe element
+FiremittHelper.auth({
+  url: "https://ouss.es/fireguard",
+  mode: "iframe",
+  iframe: { element: document.getElementById("auth-frame") as HTMLIFrameElement },
+  config: { name: "My App", firebase: { /* ... */ } }
+});
 ```
 
 > You can point `url` at the hosted Fireguard instance (`https://ouss.es/fireguard`) or your own [self-hosted](https://github.com/EOussama/fireguard) deployment.
@@ -110,9 +138,18 @@ FiremittHelper.auth(options)
 | Property | Type | Required | Description |
 | -------- | ---- | :------: | ----------- |
 | `url` | `string` | ✓ | URL of the Fireguard instance to open. |
-| `pos` | `Partial<TPos>` | | Position of the popup window on screen. |
-| `dim` | `Partial<TDim>` | | Dimensions of the popup window. |
-| `config` | `Partial<TFireguardOptions>` | | Fireguard configuration passed to the popup. |
+| `mode` | `"popup" \| "iframe"` | | Authentication mode. Defaults to `"popup"`. |
+| `iframe` | `TIframeOptions` | | Required when `mode` is `"iframe"`. Provide either an existing element or a container. |
+| `pos` | `Partial<TPos>` | | Position of the popup window on screen. Ignored in iframe mode. |
+| `dim` | `Partial<TDim>` | | Dimensions of the popup or auto-created iframe. |
+| `config` | `Partial<TFireguardOptions>` | | Fireguard configuration passed to the auth window. |
+
+#### `TIframeOptions`
+
+| Property | Type | Required | Description |
+| -------- | ---- | :------: | ----------- |
+| `element` | `HTMLIFrameElement` | ✓ (or `container`) | Existing iframe element to load Fireguard into. |
+| `container` | `HTMLElement` | ✓ (or `element`) | Container element where Firemitt creates and appends an iframe automatically. |
 
 #### `TPos`
 
@@ -125,8 +162,8 @@ FiremittHelper.auth(options)
 
 | Property | Type | Required | Description |
 | -------- | ---- | :------: | ----------- |
-| `width` | `number` | ✓ | Width of the popup window in pixels. |
-| `height` | `number` | ✓ | Height of the popup window in pixels. |
+| `width` | `number` | ✓ | Width of the popup or auto-created iframe in pixels. |
+| `height` | `number` | ✓ | Height of the popup or auto-created iframe in pixels. |
 
 #### `TFireguardOptions`
 
@@ -135,6 +172,7 @@ FiremittHelper.auth(options)
 | `name` | `string` | ✓ | Display name of your application shown in the Fireguard UI. |
 | `firebase` | `TFirebaseConfig` | ✓ | Firebase project configuration used to initialize authentication. |
 | `logo` | `string` | | URL to your app's logo image displayed in the Fireguard UI. |
+| `provider` | `string` | | Authentication provider to use. Defaults to `"google"`. See `EProvider` for supported values. |
 | `theme` | `Partial<TTheme>` | | Custom colors applied to the Fireguard UI. |
 
 #### `TTheme`
@@ -144,6 +182,19 @@ FiremittHelper.auth(options)
 | `text` | `string` | ✓ | Color applied to text elements. |
 | `primary` | `string` | ✓ | Primary accent color. |
 | `secondary` | `string` | ✓ | Secondary accent color. |
+| `background` | `string` | ✓ | Page background color. |
+
+#### `EProvider`
+
+| Value | Provider |
+| ----- | -------- |
+| `"google"` | Google |
+| `"github"` | GitHub |
+| `"facebook"` | Facebook |
+| `"twitter"` | Twitter / X |
+| `"microsoft"` | Microsoft |
+| `"apple"` | Apple |
+| `"yahoo"` | Yahoo |
 
 #### `TFirebaseConfig`
 
@@ -157,7 +208,17 @@ FiremittHelper.auth(options)
 | `storageBucket` | `string` | ✓ | Cloud Storage bucket name for Firebase Storage. |
 | `messagingSenderId` | `string` | ✓ | Sender ID for Firebase Cloud Messaging. |
 
-Full API reference is available in the [docs](https://ouss.es/firemitt).
+Full API reference is available in the [docs](https://eoussama.github.io/firemitt).
+
+## Playground
+
+An interactive playground is available for testing Firemitt against a live Fireguard instance without writing any code. It lets you configure all options through a form — Firebase credentials, auth provider, theme colors, dimensions, and auth mode — and trigger an auth flow directly in the browser.
+
+To run it locally:
+
+```sh
+pnpm playground
+```
 
 ## Contributing
 

@@ -16,8 +16,9 @@ const CLOSED_POLL_INTERVAL = 500;
  *
  * @category Helpers
  *
- * This class provides a static method to facilitate authentication by configuring and communicating with a Firemitt window.
- * It uses the `ConfigHelper` to initialize configuration and the `EventHelper` to manage event communications.
+ * Provides static methods to initiate authentication via a popup window or an embedded iframe.
+ * Uses `ConfigHelper` to initialize and validate configuration, and `EventHelper` to manage
+ * cross-window event communication with the Fireguard auth page.
  *
  * @class FiremittHelper
  */
