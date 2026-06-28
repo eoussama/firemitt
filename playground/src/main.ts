@@ -15,6 +15,7 @@ function readForm(): TFormValues {
     url: getField("url").value.trim(),
     name: getField("name").value.trim(),
     logo: getField("logo").value.trim(),
+    provider: getField("provider").value.trim(),
     apiKey: getField("apiKey").value.trim(),
     appId: getField("appId").value.trim(),
     projectId: getField("projectId").value.trim(),
@@ -37,6 +38,7 @@ function applyPreset(preset: Partial<TFormValues>): void {
     url: DEFAULT_FIREGUARD_URL,
     name: "",
     logo: "",
+    provider: "",
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? "",
     appId: import.meta.env.VITE_FIREBASE_APP_ID ?? "",
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? "",
@@ -108,6 +110,7 @@ async function runAuth(): Promise<void> {
     config: {
       name: values.name,
       ...(values.logo ? { logo: values.logo } : {}),
+      provider: values.provider || "google",
       ...(values.themeText && values.themePrimary && values.themeSecondary
         ? {
             theme: {
@@ -168,10 +171,10 @@ function setActiveScenario(active: HTMLButtonElement): void {
 
 function buildUrlPresets(): void {
   const presets = [
-    { label: "Hosted", value: DEFAULT_FIREGUARD_URL },
+    { label: "Default", value: DEFAULT_FIREGUARD_URL },
     { label: "localhost:5173", value: "http://localhost:5173" },
     { label: "localhost:5174", value: "http://localhost:5174" },
-    { label: "localhost:8080", value: "http://localhost:8080" },
+    { label: "https://ouss.es/fireguard", value: "http://https://ouss.es/fireguard" },
   ];
 
   const bar = document.getElementById("url-presets") as HTMLElement;

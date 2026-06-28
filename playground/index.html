@@ -394,6 +394,19 @@
                 <label for="logo">Logo URL</label>
                 <input type="url" id="logo" placeholder="https://example.com/logo.png" />
               </div>
+              <div class="field">
+                <label for="provider">Auth provider</label>
+                <input type="text" id="provider" placeholder="google" list="provider-list" />
+                <datalist id="provider-list">
+                  <option value="google"></option>
+                  <option value="github"></option>
+                  <option value="facebook"></option>
+                  <option value="twitter"></option>
+                  <option value="microsoft"></option>
+                  <option value="apple"></option>
+                  <option value="yahoo"></option>
+                </datalist>
+              </div>
               <div class="color-row">
                 <div>
                   <label for="themeText">Text color</label>

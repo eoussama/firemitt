@@ -61,6 +61,7 @@ describe("configHelper", () => {
           logo: "",
           theme: { text: "#1a3544", primary: "#ffe536", secondary: "#1a3544" },
           firebase: VALID_FIREBASE,
+          provider: "google",
         },
       });
 

@@ -33,4 +33,10 @@ export type TFireguardConfig = {
    * The Firebase configuration settings for the Fireguard.
    */
   firebase: TFirebaseConfig;
+
+  /**
+   * The authentication provider to use. Defaults to "google".
+   * Use values from `EProvider` or a custom "oidc.<id>" / "saml.<id>" string.
+   */
+  provider: string;
 };
