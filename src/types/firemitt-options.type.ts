@@ -1,38 +1,15 @@
-import { TDim, TFireguardOptions, TPos } from '.';
+import type { z } from "zod";
+
+import type { FiremittOptionsSchema } from "../schemas/firemitt-options.schema";
+
+
 
 /**
+ * Options for configuring Firemitt.
+ * Derived from `FiremittOptionsSchema` to keep the type and validation in sync.
+ *
  * @category Firemitt
  *
- * @description
- * Options for configuring Firemitt.
- * This type outlines the optional and partial settings that can be applied to customize the Firemitt.
- * 
  * @type {TFiremittOptions}
  */
-export type TFiremittOptions = {
-
-  /**
-   * @description
-   * The URL associated with the Firemitt.
-   */
-  url: string
-} & Partial<{
-
-  /**
-   * @description
-   * Optional, partial position configuration.
-   */
-  pos: Partial<TPos>
-
-  /**
-   * @description
-   * Optional, partial dimension configuration.
-   */
-  dim: Partial<TDim>
-
-  /**
-   * @description
-   * Optional, partial Fireguard configuration.
-   */
-  config: Partial<TFireguardOptions>
-}>
+export type TFiremittOptions = z.infer<typeof FiremittOptionsSchema>;

@@ -1,33 +1,15 @@
-import type { TTheme } from './theme.type';
-import type { TFirebaseConfig } from './firebase-config.type';
-import type { TFireguardConfig } from './fireguard-config.type';
+import type { z } from "zod";
+
+import type { FireguardOptionsSchema } from "../schemas/fireguard-options.schema";
+
+
 
 /**
+ * Options for configuring Fireguard.
+ * Derived from `FireguardOptionsSchema` to keep the type and validation in sync.
+ *
  * @category Fireguard
  *
- * @description
- * Options for configuring Fireguard.
- * This type specifies the options that can be provided to customize the Fireguard. It extends the TFireguardConfig with optional properties.
- * 
  * @type {TFireguardOptions}
  */
-export type TFireguardOptions = {
-  
-  /**
-   * @description
-   * The name of the Fireguard.
-   */
-  name: string,
-  
-  /**
-   * @description
-   * The Firebase configuration.
-   */
-  firebase: TFirebaseConfig
-  
-  /**
-   * @description
-   * Optional theme settings, partially applied.
-   */
-  theme?: Partial<TTheme>
-} & Partial<TFireguardConfig>
+export type TFireguardOptions = z.infer<typeof FireguardOptionsSchema>;

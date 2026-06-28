@@ -1,29 +1,30 @@
 /**
- * @category Fireguard
- *
- * @description
  * Defines the theme colors used in the application.
  * This type specifies the color scheme for theming purposes, including text, primary, and secondary colors.
- * 
+ *
+ * @category Fireguard
+ *
  * @type {TTheme}
  */
 export type TTheme = {
-  
+
   /**
-   * @description
    * The color used for text elements.
    */
-  text: string
-  
+  text: string;
+
   /**
-   * @description
    * The primary color of the theme.
    */
-  primary: string
-  
+  primary: string;
+
   /**
-   * @description
    * The secondary color of the theme.
    */
-  secondary: string
-}
+  secondary: string;
+
+  /**
+   * The background color of the theme.
+   */
+  background: string;
+};

@@ -1,24 +1,26 @@
 /**
- * @category Firebase
- *
- * @description
  * Represents a token structure with additional properties.
  * This type is primarily used for authentication purposes, containing a token response and possibly other object properties.
- * 
+ *
+ * @category Firebase
+ *
  * @type {TToken}
  */
 export type TToken = {
 
   /**
-   * @description
    * An object containing the OAuth ID token.
    */
   _tokenResponse: {
 
     /**
-     * @description
-     * The OAuth ID token.
+     * The OAuth ID token. Present for OIDC-based providers (Google, Apple, Microsoft).
      */
-    oauthIdToken: string
-  }
-} & Object
+    oauthIdToken?: string;
+
+    /**
+     * The OAuth access token. Present for all OAuth providers.
+     */
+    oauthAccessToken?: string;
+  };
+} & object;

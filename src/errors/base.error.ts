@@ -1,22 +1,21 @@
-import { EnumHelper, ErrorType, IError } from '..';
+import type { IError } from "..";
+import { EnumHelper, ErrorType } from "..";
+
+
 
 /**
- * @category Errors
- *
- * @description
  * Custom error class that extends the built-in Error class.
  * It is used as a base class for creating custom error types in your application.
+ *
+ * @category Errors
  */
 export class BaseError extends Error implements IError {
-
   /**
-   * @description
    * The type of the error.
    */
   type: ErrorType;
 
   /**
-   * @description
    * Creates a new instance of the BaseError class with the specified error message.
    *
    * @param type The type of the error.
@@ -26,11 +25,10 @@ export class BaseError extends Error implements IError {
     super(message);
 
     this.type = type;
-    this.name = `${EnumHelper.getName(ErrorType, type)}Error` ?? 'BaseError';
+    this.name = `${EnumHelper.getName(ErrorType, type) ?? "Base"}Error`;
   }
 
   /**
-   * @description
    * Returns a string representation of the error message, prefixed with "[<errorName>]".
    *
    * @returns A formatted error message.
@@ -40,14 +38,15 @@ export class BaseError extends Error implements IError {
   }
 
   /**
-   * @description
    * Returns serialized error object.
+   *
+   * @returns The serialized error object.
    */
   toObject(): IError {
     return {
       type: this.type,
       name: this.name,
-      message: this.message
-    }
+      message: this.message,
+    };
   }
 }
