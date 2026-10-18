@@ -10,6 +10,10 @@ permissions:
 jobs:
   npm:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # npm trusted publishing (OIDC), NPM_TOKEN is only used as a fallback.
+      id-token: write
 
     steps:
     - name: Checkout Code
