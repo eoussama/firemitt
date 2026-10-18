@@ -1,3 +1,6 @@
+/**
+ * Values of the playground form.
+ */
 export type TFormValues = {
   readonly url: string;
   readonly name: string;
@@ -10,6 +13,7 @@ export type TFormValues = {
   readonly measurementId: string;
   readonly storageBucket: string;
   readonly messagingSenderId: string;
+  readonly themeEnabled: boolean;
   readonly themeText: string;
   readonly themePrimary: string;
   readonly themeSecondary: string;
@@ -18,10 +22,39 @@ export type TFormValues = {
   readonly dimHeight: string;
   readonly posX: string;
   readonly posY: string;
-  readonly mode: string;
+  readonly mode: TMode;
 };
 
+/**
+ * How Fireguard is opened.
+ */
+export type TMode = "popup" | "iframe" | "iframe-dialog" | "iframe-element";
+
+/**
+ * Fields describing where Fireguard runs and which Firebase project it uses.
+ * They are remembered between scenarios, unless a scenario overrides them.
+ */
+export const CONNECTION_FIELDS = [
+  "url",
+  "apiKey",
+  "appId",
+  "projectId",
+  "authDomain",
+  "measurementId",
+  "storageBucket",
+  "messagingSenderId",
+] as const;
+
+/**
+ * A connection field.
+ */
+export type TConnectionField = (typeof CONNECTION_FIELDS)[number];
+
+/**
+ * A preset of the playground form.
+ */
 export type TScenario = {
+  readonly group: "Sign-in" | "Embedding" | "Errors";
   readonly label: string;
   readonly description: string;
   readonly preset: Partial<TFormValues>;
@@ -29,27 +62,25 @@ export type TScenario = {
 
 export const SCENARIOS: readonly TScenario[] = [
   {
-    label: "Valid config",
-    description: "All required fields are present and valid. Should open the Fireguard popup and complete auth.",
-    preset: {
-      name: "Test App",
-      provider: "google",
-    },
+    group: "Sign-in",
+    label: "Google sign-in",
+    description: "Opens Fireguard in a popup and signs in with Google. Resolves with a Google ID token.",
+    preset: { name: "Test App", provider: "google" },
   },
   {
-    label: "GitHub provider",
-    description: "Uses GitHub as the auth provider instead of the default Google.",
-    preset: {
-      name: "Test App",
-      provider: "github",
-    },
+    group: "Sign-in",
+    label: "GitHub sign-in",
+    description: "Signs in with GitHub instead of Google. Resolves with a GitHub access token.",
+    preset: { name: "Test App", provider: "github" },
   },
   {
-    label: "Custom theme",
-    description: "Passes custom theme colors to the Fireguard UI alongside a logo URL.",
+    group: "Sign-in",
+    label: "Branded",
+    description: "Sends a logo and custom theme colors, which Fireguard applies to its UI.",
     preset: {
       name: "Branded App",
-      logo: "../assets/logo.svg",
+      logo: "https://raw.githubusercontent.com/eoussama/firemitt/main/assets/logo.svg",
+      themeEnabled: true,
       themeText: "#79531a",
       themePrimary: "#ee16cc",
       themeSecondary: "#12ff32",
@@ -57,74 +88,57 @@ export const SCENARIOS: readonly TScenario[] = [
     },
   },
   {
-    label: "Custom dimensions",
-    description: "Overrides the popup width/height and position.",
-    preset: {
-      name: "Test App",
-      dimWidth: "600",
-      dimHeight: "400",
-      posX: "100",
-      posY: "100",
-    },
+    group: "Sign-in",
+    label: "Unicode app name",
+    description: "Uses an app name with accents, Arabic script and an emoji. The configuration must still reach Fireguard.",
+    preset: { name: "Café – تطبيق 😀" },
   },
   {
-    label: "Iframe embed (auto-create)",
-    description: "Opens Fireguard embedded in an iframe created inside the result panel. Uses mode: \"iframe\" with a container.",
-    preset: {
-      name: "Test App",
-      mode: "iframe",
-    },
+    group: "Sign-in",
+    label: "Window size & position",
+    description: "Overrides the popup dimensions and position.",
+    preset: { name: "Test App", dimWidth: "600", dimHeight: "400", posX: "100", posY: "100" },
   },
   {
-    label: "Iframe embed (dialog)",
-    description: "Opens Fireguard embedded in an iframe inside a modal <dialog>. The dialog closes automatically when auth resolves or rejects.",
-    preset: {
-      name: "Test App",
-      mode: "iframe-dialog",
-    },
+    group: "Embedding",
+    label: "Iframe",
+    description: "Embeds Fireguard in an iframe that Firemitt creates in the preview area, and removes once the session settles.",
+    preset: { name: "Test App", mode: "iframe" },
   },
   {
-    label: "Iframe embed (existing element)",
-    description: "Reuses a persistent <iframe> element already in the DOM. Fireguard is loaded into it without Firemitt managing its lifecycle.",
-    preset: {
-      name: "Test App",
-      mode: "iframe-element",
-    },
+    group: "Embedding",
+    label: "Iframe in a dialog",
+    description: "Embeds Fireguard in an iframe inside a modal dialog, closed when the session settles.",
+    preset: { name: "Test App", mode: "iframe-dialog" },
   },
   {
+    group: "Embedding",
+    label: "Existing iframe",
+    description: "Loads Fireguard into an iframe already in the page. Firemitt neither resizes nor removes it.",
+    preset: { name: "Test App", mode: "iframe-element" },
+  },
+  {
+    group: "Errors",
     label: "Missing URL",
-    description: "The url field is empty. ConfigHelper should throw InvalidURLError immediately.",
-    preset: {
-      url: "",
-      name: "Test App",
-    },
+    description: "The Fireguard URL is empty: auth() throws an InvalidURLError right away.",
+    preset: { url: "", name: "Test App" },
   },
   {
-    label: "Invalid URL (bad protocol)",
-    description: "URL uses ftp:// protocol. ConfigHelper rejects non http/https URLs.",
-    preset: {
-      url: "ftp://example.com",
-      name: "Test App",
-    },
+    group: "Errors",
+    label: "Non-http URL",
+    description: "The URL uses the ftp:// protocol: auth() throws an InvalidURLError.",
+    preset: { url: "ftp://example.com", name: "Test App" },
   },
   {
-    label: "Invalid URL (not a URL)",
-    description: "URL is a plain string with no protocol. ConfigHelper should throw InvalidURLError.",
-    preset: {
-      url: "not-a-valid-url",
-      name: "Test App",
-    },
-  },
-  {
+    group: "Errors",
     label: "Missing app name",
-    description: "The app name is empty. ConfigHelper should throw InvalidAppNameError.",
-    preset: {
-      name: "",
-    },
+    description: "The app name is empty: auth() throws an InvalidAppNameError.",
+    preset: { name: "" },
   },
   {
-    label: "Empty Firebase object",
-    description: "Firebase config is explicitly an empty object {}. ConfigHelper should throw InvalidFirebaseConfigError.",
+    group: "Errors",
+    label: "Empty Firebase config",
+    description: "Every Firebase field is empty: auth() throws an InvalidFirebaseConfigError.",
     preset: {
       name: "Test App",
       apiKey: "",
@@ -135,5 +149,17 @@ export const SCENARIOS: readonly TScenario[] = [
       storageBucket: "",
       messagingSenderId: "",
     },
+  },
+  {
+    group: "Errors",
+    label: "Invalid dimensions",
+    description: "The width is zero: auth() throws an InvalidDimError.",
+    preset: { name: "Test App", dimWidth: "0" },
+  },
+  {
+    group: "Errors",
+    label: "Unknown provider",
+    description: "The provider is misspelled: Fireguard reports an InvalidProviderError instead of signing in with Google.",
+    preset: { name: "Test App", provider: "gogle" },
   },
 ];

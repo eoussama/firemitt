@@ -1,6 +1,8 @@
 /**
  * Enumeration representing error names.
  *
+ * Values are part of the wire format exchanged with Fireguard, new members are only ever appended.
+ *
  * @category Firemitt
  */
 export enum ErrorType {
@@ -53,4 +55,18 @@ export enum ErrorType {
    * {@link InvalidIframeError}
    */
   InvalidIframe = 7,
+
+  /**
+   * Popup blocked error.
+   *
+   * {@link PopupBlockedError}
+   */
+  PopupBlocked = 8,
+
+  /**
+   * Authentication failed error, reported by Fireguard.
+   *
+   * {@link AuthFailedError}
+   */
+  AuthFailed = 9,
 }

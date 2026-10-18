@@ -1,4 +1,5 @@
-import type { TMessage } from "..";
+import type { TUnsafe } from "@eoussama/core";
+import type { TListenOptions, TMessage } from "..";
 
 import type { EventType } from "../enums/event.enum";
 import { Base64helper } from ".";
@@ -8,26 +9,35 @@ import { Base64helper } from ".";
 /**
  * Helper class for managing custom events across different windows or iframes.
  *
- * @category Helpers
- *
  * This class provides static methods to initialize the event system, send encoded messages, and listen for specific event types.
  * It uses the `Base64helper` class for encoding and decoding messages.
  *
- * @class EventHelper
+ * @category Helpers
  */
 export class EventHelper {
-  private static target: Window;
-  private static hostWindow: Window = globalThis.window;
-  private static handlers: Set<(e: MessageEvent) => void> = new Set();
+  /**
+   * The window messages are posted to.
+   */
+  private static target: TUnsafe<Window>;
+
+  /**
+   * The window message listeners are attached to.
+   */
+  private static hostWindow: TUnsafe<Window>;
+
+  /**
+   * Active message listeners, mapped to the window they are attached to.
+   */
+  private static handlers: Map<(e: MessageEvent) => void, Window> = new Map();
 
   /**
    * Removes all active message listeners registered by this helper.
    * Called before each new session to prevent stale handlers from a previous
-   * auth call from intercepting events meant for the new popup.
+   * session from intercepting events meant for the new one.
    */
-  private static cleanup(): void {
-    for (const handler of this.handlers) {
-      this.hostWindow.removeEventListener("message", handler);
+  static dispose(): void {
+    for (const [handler, host] of this.handlers) {
+      host.removeEventListener("message", handler);
     }
 
     this.handlers.clear();
@@ -39,70 +49,82 @@ export class EventHelper {
    * This method sets the target window where the messages will be posted to.
    * Any listeners registered during a previous session are removed first.
    * The calling page's window is captured as the host window for message listeners.
+   * When no target is given, nothing is changed and the current session is left untouched.
    *
-   * @param {Window} target - The target window to which messages will be sent.
+   * @param {TUnsafe<Window>} target - The target window to which messages will be sent.
    * @returns {boolean} Returns true if the target is successfully set, otherwise false.
    */
-  static init(target: Window): boolean {
+  static init(target: TUnsafe<Window>): boolean {
+    if (!target) {
+      return false;
+    }
+
+    this.dispose();
     this.hostWindow = window;
-    this.cleanup();
     this.target = target;
 
-    return Boolean(this.target);
+    return true;
   }
 
   /**
    * Sends a message to the target window.
    *
    * This method encodes a message of the specified event type and data, then posts it to the target window.
+   * It does nothing when {@link EventHelper.init} was never called successfully.
    *
    * @template T - The type of data being sent.
    * @param {EventType} type - The type of event.
    * @param {T} [data] - Optional data to be included in the event message.
+   * @param {string} [targetOrigin] - The origin the target window must have for the message to be delivered. Defaults to `"*"`.
    * @returns {typeof EventHelper} Returns the EventHelper class for method chaining.
    */
-  static send<T extends object = object>(type: EventType, data?: T): typeof EventHelper {
+  static send<T extends object = object>(type: EventType, data?: T, targetOrigin: string = "*"): typeof EventHelper {
     const payload = { ...data };
     const response: TMessage = { type, payload };
-    const message = Base64helper.encode(response);
 
-    this.target.postMessage(message, "*");
+    this.target?.postMessage(Base64helper.encode(response), targetOrigin);
 
     return this;
   }
 
   /**
-   * Sets up an event listener for a specific event type.
+   * Sets up a one-time event listener for a specific event type.
    *
-   * This method listens for messages of the specified event type and executes the provided function when such an event occurs.
+   * This method listens for messages of the specified event type and executes the provided function the first time such an event occurs.
+   * Untrusted events, events that are not valid encoded messages, and (when `options.source` is not `undefined`) events
+   * coming from any other source are ignored.
    *
    * @template T - The expected type of data in the event message.
    * @param {EventType} type - The type of event to listen for.
-   * @param {(data?: T) => any} func - The function to execute when the event is received. It receives the event data as an argument.
+   * @param {(data?: T, event?: MessageEvent) => void} func - The function to execute when the event is received. It receives the event data and the raw message event.
+   * @param {TListenOptions} [options] - Optional listener options.
    * @returns {typeof EventHelper} Returns the EventHelper class for method chaining.
    */
-  static on<T = unknown>(type: EventType, func: (data?: T) => void): typeof EventHelper {
+  static on<T = unknown>(type: EventType, func: (data?: T, event?: MessageEvent) => void, options: TListenOptions = {}): typeof EventHelper {
+    const host = this.hostWindow ?? window;
+
     const handler = (e: MessageEvent) => {
-      if (e.isTrusted) {
-        let message: ReturnType<typeof Base64helper.decode>;
+      if (!e.isTrusted || (options.source !== undefined && e.source !== options.source)) {
+        return;
+      }
 
-        try {
-          message = Base64helper.decode(e.data);
-        }
-        catch {
-          return;
-        }
+      let message: TMessage;
 
-        if (message.type === type) {
-          func(message.payload as T);
-          this.hostWindow.removeEventListener("message", handler);
-          this.handlers.delete(handler);
-        }
+      try {
+        message = Base64helper.decode(e.data);
+      }
+      catch {
+        return;
+      }
+
+      if (message.type === type && this.handlers.delete(handler)) {
+        host.removeEventListener("message", handler);
+        func(message.payload as T, e);
       }
     };
 
-    this.handlers.add(handler);
-    this.hostWindow.addEventListener("message", handler);
+    this.handlers.set(handler, host);
+    host.addEventListener("message", handler);
 
     return this;
   }

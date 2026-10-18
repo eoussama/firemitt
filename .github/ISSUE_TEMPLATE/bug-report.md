@@ -22,16 +22,13 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
-
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+**Environment (please complete the following information):**
+ - OS: [e.g. Windows 11, macOS 15]
+ - Browser: [e.g. Chrome 140, Firefox 145]
+ - Firemitt version: [e.g. 0.1.9]
+ - Fireguard instance: [e.g. hosted, self-hosted]
+ - Mode: [popup, iframe]
+ - Host: [web page, Chrome extension page]
 
 **Additional context**
-Add any other context about the problem here.
+Add any other context about the problem here (e.g. console errors from the host page and the Fireguard window).

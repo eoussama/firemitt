@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -eu
+
 rm -rf pkg
 mkdir pkg
 

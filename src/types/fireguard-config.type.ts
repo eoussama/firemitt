@@ -6,7 +6,7 @@ import type { TTheme } from "./theme.type";
 
 /**
  * Configuration settings for Fireguard.
- * This type includes essential configuration details necessary for initializing and customizing the Fireguard.
+ * This is the configuration sent to Fireguard once it has loaded.
  *
  * @category Fireguard
  *
@@ -15,22 +15,22 @@ import type { TTheme } from "./theme.type";
 export type TFireguardConfig = {
 
   /**
-   * The name of the Fireguard.
+   * The display name of the application requesting authentication.
    */
   name: string;
 
   /**
-   * The URL or path to the Fireguard's logo.
+   * The absolute URL of the application's logo, shown in the Fireguard UI.
    */
   logo: string;
 
   /**
-   * The theme settings for the Fireguard.
+   * The theme colors applied to the Fireguard UI.
    */
   theme: TTheme;
 
   /**
-   * The Firebase configuration settings for the Fireguard.
+   * The Firebase configuration used by Fireguard to authenticate.
    */
   firebase: TFirebaseConfig;
 

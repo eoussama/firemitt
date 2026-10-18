@@ -16,6 +16,11 @@ export class BaseError extends Error implements IError {
   type: ErrorType;
 
   /**
+   * An optional machine-readable error code (e.g. a Firebase `auth/*` code).
+   */
+  declare code?: string;
+
+  /**
    * Creates a new instance of the BaseError class with the specified error message.
    *
    * @param type The type of the error.
@@ -43,10 +48,16 @@ export class BaseError extends Error implements IError {
    * @returns The serialized error object.
    */
   toObject(): IError {
-    return {
+    const error: IError = {
       type: this.type,
       name: this.name,
       message: this.message,
     };
+
+    if (this.code !== undefined) {
+      error.code = this.code;
+    }
+
+    return error;
   }
 }

@@ -1,4 +1,5 @@
 import {
+  AuthFailedError,
   BaseError,
   ErrorType,
   InvalidAppError,
@@ -7,6 +8,7 @@ import {
   InvalidFirebaseConfigError,
   InvalidProviderError,
   InvalidURLError,
+  PopupBlockedError,
 } from "../src/index.ts";
 
 
@@ -170,5 +172,67 @@ describe("tests InvalidFirebaseConfigError", () => {
       name: error.name,
       message: error.message,
     });
+  });
+});
+
+describe("tests PopupBlockedError", () => {
+  const error = new PopupBlockedError();
+
+  it("should have the correct name and type", () => {
+    expect(error.name).toBe("PopupBlockedError");
+    expect(error.type).toBe(ErrorType.PopupBlocked);
+  });
+
+  it("toObject should return serialized error", () => {
+    expect(error.toObject()).toEqual({
+      type: ErrorType.PopupBlocked,
+      name: error.name,
+      message: error.message,
+    });
+  });
+});
+
+describe("tests AuthFailedError", () => {
+  it("should default to the AuthFailed type, name and a generic message", () => {
+    const error = new AuthFailedError();
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.type).toBe(ErrorType.AuthFailed);
+    expect(error.name).toBe("AuthFailedError");
+    expect(error.message).toBe("Authentication failed");
+    expect(error.code).toBeUndefined();
+    expect(error.toObject()).toEqual({ type: ErrorType.AuthFailed, name: "AuthFailedError", message: "Authentication failed" });
+  });
+
+  it("should keep the remote type, name, message and code", () => {
+    const remote = { type: ErrorType.InvalidProvider, name: "InvalidProviderError", message: "Invalid provider", code: "auth/x" };
+    const error = new AuthFailedError(remote);
+
+    expect(error.toObject()).toEqual(remote);
+    expect(error.cause).toBe(remote);
+  });
+
+  it("should fall back to the AuthFailed type for unknown remote types", () => {
+    const error = new AuthFailedError({ type: 0, name: "FirebaseError", message: "Firebase: Error (auth/popup-blocked).", code: "" });
+
+    expect(error.type).toBe(ErrorType.AuthFailed);
+    expect(error.name).toBe("FirebaseError");
+    expect(error.code).toBeUndefined();
+  });
+
+  it("should accept a string or an unexpected payload", () => {
+    expect(new AuthFailedError("failure").message).toBe("failure");
+    expect(new AuthFailedError(42).message).toBe("Authentication failed");
+    expect(new AuthFailedError({ name: "", message: "" }).name).toBe("AuthFailedError");
+  });
+});
+
+describe("tests BaseError code", () => {
+  it("should serialize the code when set", () => {
+    const error = new BaseError(ErrorType.InvalidApp, "message");
+
+    error.code = "auth/invalid-api-key";
+
+    expect(error.toObject()).toEqual({ type: ErrorType.InvalidApp, name: "InvalidAppError", message: "message", code: "auth/invalid-api-key" });
   });
 });

@@ -5,6 +5,9 @@ on:
     tags:
       - "*"
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,20 +16,25 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v7
 
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v6
+
     - name: Setup Node.js
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@v7
       with:
-        node-version: 22.x
+        node-version: 24.x
+        cache: pnpm
 
     - name: Install Dependencies
-      run: |
-        corepack enable
-        pnpm install
-      env:
-        CI: true
+      run: pnpm install --frozen-lockfile
 
     - name: Build Project
       run: pnpm build
+
+    - name: Check the published entry points
+      run: |
+        node -e "const m = require('./dist/firemitt.umd.cjs'); if (!m.FiremittHelper || !m.EventHelper || !m.Base64helper) process.exit(1)"
+        node --input-type=module -e "const m = await import('./dist/firemitt.es.js'); if (!m.FiremittHelper || !m.EventHelper || !m.Base64helper) process.exit(1)"
 
     - name: Run Tests
       run: pnpm test
@@ -47,7 +55,7 @@ jobs:
         fi
 
     - name: Checkout and update build branch
-      uses: EndBug/add-and-commit@v9
+      uses: EndBug/add-and-commit@v11
       with:
         new_branch: build
         pathspec_error_handling: exitImmediately

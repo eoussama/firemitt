@@ -12,16 +12,7 @@ import { FireguardOptionsSchema } from "./fireguard-options.schema";
  */
 export const FiremittOptionsSchema = z.object({
   url: z.string().refine(
-    (val) => {
-      try {
-        const parsed = new URL(val);
-
-        return parsed.protocol === "http:" || parsed.protocol === "https:";
-      }
-      catch {
-        return false;
-      }
-    },
+    val => URL.canParse(val) && ["http:", "https:"].includes(new URL(val).protocol),
     { message: "Invalid URL" },
   ),
   pos: z

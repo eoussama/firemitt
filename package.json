@@ -1,9 +1,9 @@
 {
   "name": "@eoussama/firemitt",
   "type": "module",
-  "version": "0.1.8",
-  "packageManager": "pnpm@11.9.0",
-  "description": "Yes, fireguards are hot, but not enough to burn. Intermediate package that facilitates working with Fireguard.",
+  "version": "0.1.9",
+  "packageManager": "pnpm@12.14.0",
+  "description": "Host-side companion of Fireguard: opens the Fireguard sign-in proxy in a popup or an iframe and resolves with the Firebase authentication token. Fireguards are hot, but not enough to burn.",
   "author": {
     "name": "eoussama",
     "url": "https://ouss.es",
@@ -22,51 +22,63 @@
     "auth",
     "firebase",
     "fireguard",
-    "firebase-auth"
+    "firebase-auth",
+    "oauth",
+    "chrome-extension",
+    "manifest-v3",
+    "popup",
+    "iframe"
   ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/firemitt.es.js",
-      "require": "./dist/firemitt.umd.js"
-    }
+      "require": "./dist/firemitt.umd.cjs",
+      "default": "./dist/firemitt.es.js"
+    },
+    "./package.json": "./package.json"
   },
   "main": "./dist/firemitt.es.js",
+  "module": "./dist/firemitt.es.js",
+  "unpkg": "./dist/firemitt.umd.js",
+  "jsdelivr": "./dist/firemitt.umd.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "LICENSE",
     "README.md",
     "dist"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=24"
   },
   "scripts": {
     "prepublishOnly": "pnpm build",
-    "dev": "vite",
     "playground": "vite --config playground/vite.config.js",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
-    "preview": "vite preview",
-    "clean": "rm -rf dist pkg",
+    "clean": "node -e \"for (const dir of ['dist', 'pkg', 'doc', 'coverage', 'reports', '.stryker-tmp']) require('node:fs').rmSync(dir, { recursive: true, force: true })\"",
     "build": "tsc && vite build",
     "lint": "dx lint",
     "lint:fix": "dx lint --fix",
-    "package": "./scripts/package.sh",
-    "doc": "pnpm exec typedoc && cp assets/favicon.ico doc/",
-    "prod": "pnpm audit && pnpm lint && pnpm build && pnpm test && pnpm coverage && pnpm doc"
+    "package": "sh ./scripts/package.sh",
+    "doc": "typedoc",
+    "mutation": "stryker run",
+    "check": "pnpm audit && pnpm lint && pnpm build && pnpm coverage && pnpm mutation && pnpm doc"
   },
   "dependencies": {
-    "@eoussama/core": "^0.0.4",
-    "zod": "^4.4.3"
+    "@eoussama/core": "^0.1.2",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@eoussama/dx": "^0.0.4",
-    "@vitest/coverage-v8": "^4.1.9",
-    "typedoc": "^0.28.19",
+    "@eoussama/dx": "^0.1.3",
+    "@stryker-mutator/core": "^10.0.0",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "@vitest/coverage-v8": "^5.0.5",
+    "typedoc": "^0.28.20",
     "typedoc-material-theme": "^1.4.1",
-    "typescript": "^6.0.3",
-    "vite": "^8.1.0",
-    "vite-plugin-dts": "^5.0.3",
-    "vitest": "^4.1.9"
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vite": "^8.3.4",
+    "vite-plugin-dts": "^5.1.2",
+    "vitest": "^5.0.5"
   }
 }

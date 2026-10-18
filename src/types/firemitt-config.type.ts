@@ -4,7 +4,7 @@ import type { TDim, TFireguardConfig, TPos } from ".";
 
 /**
  * Configuration settings for Firemitt.
- * This type includes necessary configuration details for initializing and setting up the Firemitt.
+ * This is the normalized configuration produced by `ConfigHelper.init`.
  *
  * @category Firemitt
  *
@@ -23,7 +23,7 @@ export type TFiremittConfig = {
   dim: TDim;
 
   /**
-   * The URL associated with the Firemitt.
+   * The normalized URL of the Fireguard instance.
    */
   url: string;
 

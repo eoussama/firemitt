@@ -6,14 +6,12 @@ import type { TUnsafe } from "@eoussama/core";
  * Helps with enums.
  *
  * @category Helpers
- *
- * @class EnumHelper
  */
 export class EnumHelper {
   /**
    * Returns the name for an enum value.
    *
-   * @param enumType The enumurator.
+   * @param enumType The enumerator.
    * @param enumValue The enum value.
    * @returns {TUnsafe<keyof T>} A key name corresponding to the input value.
    */

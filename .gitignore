@@ -19,8 +19,10 @@ pkg
 # TypeScript
 *.tsbuildinfo
 
-# Test coverage
+# Test coverage and mutation testing
 coverage
+reports
+.stryker-tmp
 
 # Environment variables
 .env

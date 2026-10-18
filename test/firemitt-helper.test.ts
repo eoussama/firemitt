@@ -1,417 +1,452 @@
+import type { TFireguardConfig, TMessage } from "../src/index.ts";
 import { vi } from "vitest";
-import { Base64helper, EventType, FiremittHelper, InvalidIframeError } from "../src/index.ts";
+import {
+  AuthFailedError,
+  Base64helper,
+  ErrorType,
+  EventType,
+  FiremittHelper,
+  InvalidAppNameError,
+  InvalidIframeError,
+  InvalidURLError,
+  PopupBlockedError,
+} from "../src/index.ts";
 import { VALID_FIREBASE } from "./fixtures.ts";
 
 
 
+const ORIGIN = "https://fireguard-instance.com";
+const CLOSED = "The authentication window was closed.";
+const REPLACED = "A new authentication session was started.";
+
 const BASE_OPTIONS = {
-  url: "https://fireguard-instance.com",
+  url: ORIGIN,
   config: {
     name: "TestApp",
     firebase: VALID_FIREBASE,
   },
 };
 
+type TListener = (e: MessageEvent) => void;
+
+type TFakeWindow = {
+  closed: boolean;
+  postMessage: ReturnType<typeof vi.fn>;
+  close: ReturnType<typeof vi.fn>;
+};
+
+type TFakeIframe = {
+  src: string;
+  style: { width: string; height: string };
+  contentWindow: TFakeWindow | null;
+  parentNode: { removeChild: ReturnType<typeof vi.fn> } | null;
+};
+
+/**
+ * Creates a fake window that can post messages and be closed.
+ *
+ * @returns The fake window.
+ */
+function createWindow(): TFakeWindow {
+  const win: TFakeWindow = {
+    closed: false,
+    postMessage: vi.fn(),
+    close: vi.fn(() => {
+      win.closed = true;
+    }),
+  };
+
+  return win;
+}
+
+/**
+ * Creates a fake iframe element.
+ *
+ * @param contentWindow The window of the iframe.
+ * @returns The fake iframe.
+ */
+function createIframe(contentWindow: TFakeWindow | null = createWindow()): TFakeIframe {
+  return {
+    src: "",
+    style: { width: "", height: "" },
+    contentWindow,
+    parentNode: { removeChild: vi.fn() },
+  };
+}
+
+/**
+ * Builds a message event as posted by Fireguard.
+ *
+ * @param source The window that posted the message.
+ * @param type The event type.
+ * @param payload The payload of the message.
+ * @param origin The origin of the window that posted the message.
+ * @returns The message event.
+ */
+function from(source: unknown, type: EventType, payload: object = {}, origin: string = ORIGIN): MessageEvent {
+  return { isTrusted: true, source, origin, data: Base64helper.encode({ type, payload }) } as unknown as MessageEvent;
+}
+
+/**
+ * Decodes the message posted at the given call index of a fake window.
+ *
+ * @param win The fake window.
+ * @param index The call index.
+ * @returns The decoded message and its target origin.
+ */
+function posted(win: TFakeWindow, index = 0): { message: TMessage<TFireguardConfig>; origin: string } {
+  const [data, origin] = win.postMessage.mock.calls[index];
+
+  return { message: Base64helper.decode<TFireguardConfig>(data), origin };
+}
+
 describe("tests FiremittHelper", () => {
-  let messageListeners: Array<(e: MessageEvent) => void>;
-  let mockWin: { postMessage: ReturnType<typeof vi.fn>; closed: boolean };
+  let listeners: Set<TListener>;
+  let popup: TFakeWindow;
+  let host: {
+    open: ReturnType<typeof vi.fn>;
+    screen: { width: number };
+    addEventListener: ReturnType<typeof vi.fn>;
+    removeEventListener: ReturnType<typeof vi.fn>;
+  };
+
+  const dispatch = (e: MessageEvent): void => {
+    [...listeners].forEach(listener => listener(e));
+  };
 
   beforeEach(() => {
-    messageListeners = [];
-    mockWin = { postMessage: vi.fn(), closed: false };
+    listeners = new Set();
+    popup = createWindow();
 
-    globalThis.window = {
-      open: vi.fn(() => mockWin),
+    host = {
+      open: vi.fn(() => popup),
       screen: { width: 1024 },
-      addEventListener: vi.fn((_, handler: (e: MessageEvent) => void) => {
-        messageListeners.push(handler);
-      }),
-      removeEventListener: vi.fn(),
-      setInterval: vi.fn(() => 1),
-      clearInterval: vi.fn(),
-    } as unknown as Window & typeof globalThis;
+      addEventListener: vi.fn((_: string, listener: TListener) => listeners.add(listener)),
+      removeEventListener: vi.fn((_: string, listener: TListener) => listeners.delete(listener)),
+    };
+
+    globalThis.window = host as unknown as Window & typeof globalThis;
+  });
+
+  afterEach(() => {
+    const helper = FiremittHelper as unknown as { cancelActive: (() => void) | null };
+
+    helper.cancelActive?.();
+    helper.cancelActive = null;
+    vi.clearAllTimers();
+    vi.useRealTimers();
   });
 
   describe("auth (popup mode)", () => {
-    it("should resolve with token on successful authentication", async () => {
+    it("should open a popup window with the normalized URL and window features", () => {
+      FiremittHelper.auth(BASE_OPTIONS).catch(() => {});
+
+      expect(host.open).toHaveBeenCalledWith(`${ORIGIN}/`, "_blank", expect.stringMatching(/^width=450,height=260,left=-?\d+,top=50$/));
+    });
+
+    it("should throw synchronously on invalid options", () => {
+      expect(() => FiremittHelper.auth({ url: "invalid" })).toThrow(InvalidURLError);
+      expect(host.open).not.toHaveBeenCalled();
+    });
+
+    it("should answer Loaded with the config and resolve with the token", async () => {
       const authPromise = FiremittHelper.auth(BASE_OPTIONS);
 
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+      dispatch(from(popup, EventType.Loaded));
 
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
+      const { message, origin } = posted(popup);
 
-      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "auth-token-123" } });
+      expect(origin).toBe(ORIGIN);
+      expect(message.type).toBe(EventType.Config);
+      expect(message.payload.name).toBe("TestApp");
+      expect(message.payload.firebase).toEqual(VALID_FIREBASE);
 
-      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
+      dispatch(from(popup, EventType.AuthSucceded, { token: "auth-token-123" }));
 
       await expect(authPromise).resolves.toBe("auth-token-123");
+      expect(listeners.size).toBe(0);
     });
 
-    it("should reject with error on failed authentication", async () => {
+    it("should answer every Loaded event, e.g. after Fireguard reloads", async () => {
       const authPromise = FiremittHelper.auth(BASE_OPTIONS);
 
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+      dispatch(from(popup, EventType.Loaded));
+      dispatch(from(popup, EventType.Loaded));
 
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
+      expect(popup.postMessage).toHaveBeenCalledTimes(2);
+      expect(host.addEventListener).toHaveBeenCalledTimes(1);
+      expect(listeners.size).toBe(1);
 
-      const failMsg = Base64helper.encode({ type: EventType.AuthFailed, payload: { error: "auth_error" } });
+      dispatch(from(popup, EventType.AuthSucceded, { token: "token" }));
 
-      messageListeners.forEach(h => h({ isTrusted: true, data: failMsg } as MessageEvent));
-
-      await expect(authPromise).rejects.toBe("auth_error");
+      await expect(authPromise).resolves.toBe("token");
     });
 
-    it("should open a popup window with the correct URL", () => {
-      FiremittHelper.auth(BASE_OPTIONS);
+    it("should post the config to any origin when Fireguard has an opaque origin", () => {
+      FiremittHelper.auth(BASE_OPTIONS).catch(() => {});
 
-      expect((globalThis.window as unknown as { open: ReturnType<typeof vi.fn> }).open).toHaveBeenCalledWith(
-        "https://fireguard-instance.com/",
-        "_blank",
-        expect.any(String),
-      );
+      dispatch(from(popup, EventType.Loaded, {}, "null"));
+      dispatch(from(popup, EventType.Loaded, {}, ""));
+
+      expect(posted(popup, 0).origin).toBe("*");
+      expect(posted(popup, 1).origin).toBe("*");
     });
 
-    it("should not set up event listeners when the popup fails to open", () => {
-      (globalThis.window as unknown as { open: ReturnType<typeof vi.fn> }).open = vi.fn(() => null);
+    it("should encode non Latin-1 config values", () => {
+      FiremittHelper.auth({ ...BASE_OPTIONS, config: { ...BASE_OPTIONS.config, name: "Café – تطبيق 😀" } }).catch(() => {});
 
-      FiremittHelper.auth(BASE_OPTIONS);
+      dispatch(from(popup, EventType.Loaded));
 
-      expect(globalThis.window.addEventListener).not.toHaveBeenCalled();
+      expect(posted(popup).message.payload.name).toBe("Café – تطبيق 😀");
     });
 
-    it("should ignore AuthSucceded after already settled via AuthFailed", async () => {
+    it("should ignore messages from other windows, untrusted events and invalid data", async () => {
+      const authPromise = FiremittHelper.auth(BASE_OPTIONS);
+      const intruder = createWindow();
+
+      dispatch(from(intruder, EventType.Loaded));
+      dispatch(from(intruder, EventType.AuthSucceded, { token: "forged" }));
+      dispatch({ ...from(popup, EventType.AuthSucceded, { token: "untrusted" }), isTrusted: false } as MessageEvent);
+      dispatch({ isTrusted: true, source: popup, origin: ORIGIN, data: "not-valid-base64!!!" } as unknown as MessageEvent);
+      dispatch({ isTrusted: true, source: popup, origin: ORIGIN, data: { type: EventType.AuthSucceded } } as unknown as MessageEvent);
+
+      expect(intruder.postMessage).not.toHaveBeenCalled();
+      expect(popup.postMessage).not.toHaveBeenCalled();
+
+      dispatch(from(popup, EventType.AuthSucceded, { token: "real" }));
+
+      await expect(authPromise).resolves.toBe("real");
+    });
+
+    it("should reject with an AuthFailedError carrying the remote error", async () => {
+      const authPromise = FiremittHelper.auth(BASE_OPTIONS);
+      const error = { type: ErrorType.InvalidApp, name: "InvalidAppError", message: "Invalid app", code: "auth/invalid-api-key" };
+
+      dispatch(from(popup, EventType.AuthFailed, { error }));
+
+      const rejection = await authPromise.catch((e: unknown) => e) as AuthFailedError;
+
+      expect(rejection).toBeInstanceOf(AuthFailedError);
+      expect(rejection).toBeInstanceOf(Error);
+      expect(rejection.type).toBe(ErrorType.InvalidApp);
+      expect(rejection.name).toBe("InvalidAppError");
+      expect(rejection.message).toBe("Invalid app");
+      expect(rejection.code).toBe("auth/invalid-api-key");
+      expect(rejection.cause).toEqual(error);
+    });
+
+    it("should reject with an AuthFailedError when the remote error is a string", async () => {
       const authPromise = FiremittHelper.auth(BASE_OPTIONS);
 
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+      dispatch(from(popup, EventType.AuthFailed, { error: "auth_error" }));
 
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const failMsg = Base64helper.encode({ type: EventType.AuthFailed, payload: { error: "first_error" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: failMsg } as MessageEvent));
-
-      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "late-token" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
-
-      await expect(authPromise).rejects.toBe("first_error");
+      await expect(authPromise).rejects.toMatchObject({ type: ErrorType.AuthFailed, name: "AuthFailedError", message: "auth_error" });
     });
 
-    it("should ignore AuthFailed after already settled via AuthSucceded", async () => {
+    it("should reject with a generic AuthFailedError when the failure has no payload", async () => {
       const authPromise = FiremittHelper.auth(BASE_OPTIONS);
 
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+      dispatch({ isTrusted: true, source: popup, origin: ORIGIN, data: Base64helper.encode({ type: EventType.AuthFailed } as TMessage) } as unknown as MessageEvent);
 
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "auth-token-123" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
-
-      const failMsg = Base64helper.encode({ type: EventType.AuthFailed, payload: { error: "late_error" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: failMsg } as MessageEvent));
-
-      await expect(authPromise).resolves.toBe("auth-token-123");
+      await expect(authPromise).rejects.toMatchObject({ type: ErrorType.AuthFailed, message: "Authentication failed" });
     });
 
-    it("should resolve with token on successful authentication after retry", async () => {
+    it("should reject when the success event carries no token", async () => {
+      const first = FiremittHelper.auth(BASE_OPTIONS);
+
+      dispatch(from(popup, EventType.AuthSucceded, { token: "" }));
+
+      await expect(first).rejects.toBeInstanceOf(AuthFailedError);
+
+      const second = FiremittHelper.auth(BASE_OPTIONS);
+
+      dispatch({ isTrusted: true, source: popup, origin: ORIGIN, data: Base64helper.encode({ type: EventType.AuthSucceded } as TMessage) } as unknown as MessageEvent);
+
+      await expect(second).rejects.toThrow("Fireguard reported a successful authentication without a token");
+    });
+
+    it("should reject when the Closed event is received", async () => {
       const authPromise = FiremittHelper.auth(BASE_OPTIONS);
 
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+      dispatch(from(popup, EventType.Closed));
 
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const failMsg = Base64helper.encode({ type: EventType.AuthFailed, payload: { error: "auth_error" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: failMsg } as MessageEvent));
-
-      await expect(authPromise).rejects.toBe("auth_error");
+      await expect(authPromise).rejects.toThrow(CLOSED);
     });
 
-    it("should reject when the authentication window is closed by the user", async () => {
+    it.each([
+      ["success", () => from(popup, EventType.AuthSucceded, { token: "token" })],
+      ["failure", () => from(popup, EventType.AuthFailed, { error: "error" })],
+      ["closed", () => from(popup, EventType.Closed)],
+    ])("should remove its listener and timers once settled (%s)", async (_, event) => {
       vi.useFakeTimers();
 
       const authPromise = FiremittHelper.auth(BASE_OPTIONS);
 
-      mockWin.closed = true;
-      vi.advanceTimersByTime(600);
+      expect(vi.getTimerCount()).toBe(1);
 
-      await expect(authPromise).rejects.toThrow("The authentication window was closed.");
+      dispatch(event());
+      await authPromise.catch(() => {});
 
-      vi.useRealTimers();
+      expect(listeners.size).toBe(0);
+      expect(vi.getTimerCount()).toBe(0);
     });
 
-    it("should ignore the closed-window poller after the promise is already settled", async () => {
-      vi.useFakeTimers();
-
+    it("should accept a result message encoded by Firemitt 0.1.8 / Fireguard 0.1.3 (wire format)", async () => {
       const authPromise = FiremittHelper.auth(BASE_OPTIONS);
 
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+      dispatch({ isTrusted: true, source: popup, origin: ORIGIN, data: btoa(JSON.stringify({ type: 2, payload: { token: "wire-token" } })) } as unknown as MessageEvent);
 
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "auth-token-123" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
-
-      await expect(authPromise).resolves.toBe("auth-token-123");
-
-      mockWin.closed = true;
-      vi.advanceTimersByTime(600);
-
-      vi.useRealTimers();
+      await expect(authPromise).resolves.toBe("wire-token");
     });
 
-    it("should not reject when the poller fires while the window is still open", async () => {
-      vi.useFakeTimers();
-
+    it("should not settle on Retry", async () => {
       const authPromise = FiremittHelper.auth(BASE_OPTIONS);
 
-      vi.advanceTimersByTime(600);
-
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "still-open-token" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
-
-      await expect(authPromise).resolves.toBe("still-open-token");
-
-      vi.useRealTimers();
-    });
-
-    it("should reject immediately when Closed event is received from Fireguard", async () => {
-      const authPromise = FiremittHelper.auth(BASE_OPTIONS);
-
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const closedMsg = Base64helper.encode({ type: EventType.Closed, payload: {} });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: closedMsg } as MessageEvent));
-
-      await expect(authPromise).rejects.toThrow("The authentication window was closed.");
-    });
-
-    it("should not settle on Retry and resolve after next Loaded flow", async () => {
-      const authPromise = FiremittHelper.auth(BASE_OPTIONS);
-
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const retryMsg = Base64helper.encode({ type: EventType.Retry, payload: {} });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: retryMsg } as MessageEvent));
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "retry-token" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
+      dispatch(from(popup, EventType.Loaded));
+      dispatch(from(popup, EventType.Retry));
+      dispatch(from(popup, EventType.Loaded));
+      dispatch(from(popup, EventType.AuthSucceded, { token: "retry-token" }));
 
       await expect(authPromise).resolves.toBe("retry-token");
+    });
+
+    it("should settle only once, even when a new session starts right after", async () => {
+      const authPromise = FiremittHelper.auth(BASE_OPTIONS);
+
+      dispatch(from(popup, EventType.AuthSucceded, { token: "first" }));
+      dispatch(from(popup, EventType.AuthFailed, { error: "late" }));
+      FiremittHelper.auth(BASE_OPTIONS).catch(() => {});
+
+      await expect(authPromise).resolves.toBe("first");
+    });
+
+    it("should reject with PopupBlockedError when the popup cannot be opened, leaving the active session untouched", async () => {
+      const active = FiremittHelper.auth(BASE_OPTIONS);
+
+      host.open.mockReturnValueOnce(null);
+
+      await expect(FiremittHelper.auth(BASE_OPTIONS)).rejects.toBeInstanceOf(PopupBlockedError);
+      expect(popup.close).not.toHaveBeenCalled();
+
+      dispatch(from(popup, EventType.AuthSucceded, { token: "still-active" }));
+
+      await expect(active).resolves.toBe("still-active");
+    });
+
+    it("should reject after a grace period once the popup is closed", async () => {
+      vi.useFakeTimers();
+
+      const authPromise = FiremittHelper.auth(BASE_OPTIONS);
+      const onReject = vi.fn();
+
+      authPromise.catch(onReject);
+
+      vi.advanceTimersByTime(500);
+      popup.closed = true;
+      vi.advanceTimersByTime(500);
+      await Promise.resolve();
+
+      expect(onReject).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(300);
+
+      await expect(authPromise).rejects.toThrow(CLOSED);
+      expect(listeners.size).toBe(0);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it("should let a token posted right before the popup closed win over the closed poller", async () => {
+      vi.useFakeTimers();
+
+      const authPromise = FiremittHelper.auth(BASE_OPTIONS);
+
+      popup.closed = true;
+      vi.advanceTimersByTime(500);
+      dispatch(from(popup, EventType.AuthSucceded, { token: "last-second" }));
+      vi.advanceTimersByTime(300);
+
+      await expect(authPromise).resolves.toBe("last-second");
+    });
+
+    it("should cancel and close the previous popup when a new session starts", async () => {
+      const firstPopup = popup;
+      const first = FiremittHelper.auth(BASE_OPTIONS);
+
+      popup = createWindow();
+      host.open.mockReturnValueOnce(popup);
+
+      const second = FiremittHelper.auth(BASE_OPTIONS);
+
+      await expect(first).rejects.toThrow(REPLACED);
+      expect(firstPopup.close).toHaveBeenCalled();
+      expect(listeners.size).toBe(1);
+
+      dispatch(from(firstPopup, EventType.AuthSucceded, { token: "stale" }));
+      dispatch(from(popup, EventType.AuthSucceded, { token: "fresh" }));
+
+      await expect(second).resolves.toBe("fresh");
+    });
+
+    it("should not close a previous popup that is already closed", async () => {
+      const firstPopup = popup;
+      const first = FiremittHelper.auth(BASE_OPTIONS);
+
+      firstPopup.closed = true;
+      host.open.mockReturnValueOnce(createWindow());
+
+      FiremittHelper.auth(BASE_OPTIONS).catch(() => {});
+
+      await expect(first).rejects.toThrow(REPLACED);
+      expect(firstPopup.close).not.toHaveBeenCalled();
     });
   });
 
   describe("auth (iframe mode)", () => {
-    let iframeWin: { postMessage: ReturnType<typeof vi.fn> };
-    let mockIframe: {
-      src: string;
-      contentWindow: typeof iframeWin;
-      parentNode: { removeChild: ReturnType<typeof vi.fn> } | null;
-      addEventListener: ReturnType<typeof vi.fn>;
-    };
-    let loadHandler: (() => void) | undefined;
+    let created: TFakeIframe;
+    let container: { appendChild: ReturnType<typeof vi.fn> };
 
     beforeEach(() => {
-      iframeWin = { postMessage: vi.fn() };
-      loadHandler = undefined;
+      created = createIframe();
+      container = { appendChild: vi.fn() };
 
-      mockIframe = {
-        src: "",
-        contentWindow: iframeWin,
-        parentNode: { removeChild: vi.fn() },
-        addEventListener: vi.fn((event: string, handler: () => void) => {
-          if (event === "load") {
-            loadHandler = handler;
-          }
-        }),
-      };
-
-      (globalThis.window as unknown as {
-        addEventListener: ReturnType<typeof vi.fn>;
-      }).addEventListener = vi.fn((_, handler: (e: MessageEvent) => void) => {
-        messageListeners.push(handler);
-      });
-    });
-
-    afterEach(() => {
-      const helper = FiremittHelper as unknown as { cancelActiveIframe: (() => void) | null };
-
-      if (helper.cancelActiveIframe) {
-        helper.cancelActiveIframe = null;
-      }
+      globalThis.document = {
+        createElement: vi.fn(() => created),
+      } as unknown as Document;
     });
 
     it("should throw InvalidIframeError when neither element nor container is given", () => {
-      expect(() =>
-        FiremittHelper.auth({ ...BASE_OPTIONS, mode: "iframe" }),
-      ).toThrow(InvalidIframeError);
+      expect(() => FiremittHelper.auth({ ...BASE_OPTIONS, mode: "iframe" })).toThrow(InvalidIframeError);
     });
 
-    it("should resolve with token using a provided iframe element", async () => {
+    it("should listen before loading Fireguard into a provided element, without resizing or removing it", async () => {
+      const iframe = createIframe();
+
+      host.addEventListener.mockImplementationOnce((_: string, listener: TListener) => {
+        expect(iframe.src).toBe("");
+        listeners.add(listener);
+      });
+
       const authPromise = FiremittHelper.auth({
         ...BASE_OPTIONS,
         mode: "iframe",
-        iframe: { element: mockIframe as unknown as HTMLIFrameElement },
+        dim: { width: 800, height: 600 },
+        iframe: { element: iframe as unknown as HTMLIFrameElement },
       });
 
-      expect(mockIframe.src).toBe("https://fireguard-instance.com/");
+      expect(iframe.src).toBe(`${ORIGIN}/`);
+      expect(iframe.style).toEqual({ width: "", height: "" });
 
-      loadHandler!();
+      dispatch(from(iframe.contentWindow, EventType.Loaded));
 
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
+      expect(posted(iframe.contentWindow!).message.type).toBe(EventType.Config);
 
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "iframe-token" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
+      dispatch(from(iframe.contentWindow, EventType.AuthSucceded, { token: "iframe-token" }));
 
       await expect(authPromise).resolves.toBe("iframe-token");
+      expect(iframe.parentNode!.removeChild).not.toHaveBeenCalled();
     });
 
-    it("should reject on AuthFailed when using a provided iframe element", async () => {
-      const authPromise = FiremittHelper.auth({
-        ...BASE_OPTIONS,
-        mode: "iframe",
-        iframe: { element: mockIframe as unknown as HTMLIFrameElement },
-      });
-
-      loadHandler!();
-
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const failMsg = Base64helper.encode({ type: EventType.AuthFailed, payload: { error: "iframe_error" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: failMsg } as MessageEvent));
-
-      await expect(authPromise).rejects.toBe("iframe_error");
-    });
-
-    it("should reject on Closed event when using a provided iframe element", async () => {
-      const authPromise = FiremittHelper.auth({
-        ...BASE_OPTIONS,
-        mode: "iframe",
-        iframe: { element: mockIframe as unknown as HTMLIFrameElement },
-      });
-
-      loadHandler!();
-
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const closedMsg = Base64helper.encode({ type: EventType.Closed, payload: {} });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: closedMsg } as MessageEvent));
-
-      await expect(authPromise).rejects.toThrow("The authentication window was closed.");
-    });
-
-    it("should not remove a caller-provided iframe element on settle", async () => {
-      const authPromise = FiremittHelper.auth({
-        ...BASE_OPTIONS,
-        mode: "iframe",
-        iframe: { element: mockIframe as unknown as HTMLIFrameElement },
-      });
-
-      loadHandler!();
-
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "no-remove-token" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
-
-      await expect(authPromise).resolves.toBe("no-remove-token");
-
-      expect((mockIframe.parentNode as { removeChild: ReturnType<typeof vi.fn> }).removeChild).not.toHaveBeenCalled();
-    });
-
-    it("should create an iframe inside the container and remove it on success", async () => {
-      const createdIframe = {
-        src: "",
-        style: { width: "", height: "" },
-        contentWindow: iframeWin,
-        parentNode: { removeChild: vi.fn() },
-        addEventListener: vi.fn((event: string, handler: () => void) => {
-          if (event === "load") {
-            loadHandler = handler;
-          }
-        }),
-      };
-
-      const container = { appendChild: vi.fn() };
-
-      globalThis.document = {
-        createElement: vi.fn(() => createdIframe),
-      } as unknown as Document;
-
-      const authPromise = FiremittHelper.auth({
-        ...BASE_OPTIONS,
-        mode: "iframe",
-        iframe: { container: container as unknown as HTMLElement },
-      });
-
-      expect(container.appendChild).toHaveBeenCalledWith(createdIframe);
-      expect(createdIframe.src).toBe("https://fireguard-instance.com/");
-      expect(createdIframe.style.width).toBe("450px");
-      expect(createdIframe.style.height).toBe("260px");
-
-      loadHandler!();
-
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "container-token" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
-
-      await expect(authPromise).resolves.toBe("container-token");
-
-      expect(createdIframe.parentNode.removeChild).toHaveBeenCalledWith(createdIframe);
-    });
-
-    it("should apply custom dimensions to auto-created iframe", async () => {
-      const createdIframe = {
-        src: "",
-        style: { width: "", height: "" },
-        contentWindow: iframeWin,
-        parentNode: { removeChild: vi.fn() },
-        addEventListener: vi.fn((event: string, handler: () => void) => {
-          if (event === "load") {
-            loadHandler = handler;
-          }
-        }),
-      };
-
-      const container = { appendChild: vi.fn() };
-
-      globalThis.document = {
-        createElement: vi.fn(() => createdIframe),
-      } as unknown as Document;
-
+    it("should create, size and append an iframe in the container, and remove it on success", async () => {
       const authPromise = FiremittHelper.auth({
         ...BASE_OPTIONS,
         mode: "iframe",
@@ -419,277 +454,114 @@ describe("tests FiremittHelper", () => {
         iframe: { container: container as unknown as HTMLElement },
       });
 
-      expect(createdIframe.style.width).toBe("800px");
-      expect(createdIframe.style.height).toBe("600px");
+      expect(container.appendChild).toHaveBeenCalledWith(created);
+      expect(created.src).toBe(`${ORIGIN}/`);
+      expect(created.style).toEqual({ width: "800px", height: "600px" });
 
-      loadHandler!();
+      dispatch(from(created.contentWindow, EventType.Loaded));
+      dispatch(from(created.contentWindow, EventType.AuthSucceded, { token: "container-token" }));
 
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "dim-token" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
-
-      await expect(authPromise).resolves.toBe("dim-token");
+      await expect(authPromise).resolves.toBe("container-token");
+      expect(created.parentNode!.removeChild).toHaveBeenCalledWith(created);
     });
 
-    it("should not set dimensions on a caller-provided iframe element", async () => {
-      const ownedIframe = {
-        ...mockIframe,
-        style: { width: "", height: "" },
-      };
+    it("should remove the created iframe on failure, and tolerate an iframe already detached", async () => {
+      const authPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { container: container as unknown as HTMLElement },
+      });
+
+      dispatch(from(created.contentWindow, EventType.AuthFailed, { error: "container-fail" }));
+
+      await expect(authPromise).rejects.toThrow("container-fail");
+      expect(created.parentNode!.removeChild).toHaveBeenCalledWith(created);
+
+      created = createIframe();
+      created.parentNode = null;
+
+      const detached = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { container: container as unknown as HTMLElement },
+      });
+
+      dispatch(from(created.contentWindow, EventType.Closed));
+
+      await expect(detached).rejects.toThrow(CLOSED);
+    });
+
+    it("should ignore messages while the iframe has no window", async () => {
+      const iframe = createIframe(null);
+
+      const authPromise = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { element: iframe as unknown as HTMLIFrameElement },
+      });
+
+      dispatch(from(null, EventType.AuthSucceded, { token: "orphan" }));
+
+      iframe.contentWindow = createWindow();
+      dispatch(from(iframe.contentWindow, EventType.AuthSucceded, { token: "attached" }));
+
+      await expect(authPromise).resolves.toBe("attached");
+    });
+
+    it("should cancel the previous iframe session, removing only owned iframes", async () => {
+      const element = createIframe();
+
+      const first = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { element: element as unknown as HTMLIFrameElement },
+      });
+
+      const second = FiremittHelper.auth({
+        ...BASE_OPTIONS,
+        mode: "iframe",
+        iframe: { container: container as unknown as HTMLElement },
+      });
+
+      await expect(first).rejects.toThrow(REPLACED);
+      expect(element.parentNode!.removeChild).not.toHaveBeenCalled();
+
+      FiremittHelper.auth(BASE_OPTIONS).catch(() => {});
+
+      await expect(second).rejects.toThrow(REPLACED);
+      expect(created.parentNode!.removeChild).toHaveBeenCalledWith(created);
+    });
+
+    it("should cancel and close an active popup session", async () => {
+      const first = FiremittHelper.auth(BASE_OPTIONS);
 
       FiremittHelper.auth({
         ...BASE_OPTIONS,
         mode: "iframe",
-        dim: { width: 800, height: 600 },
-        iframe: { element: ownedIframe as unknown as HTMLIFrameElement },
+        iframe: { container: container as unknown as HTMLElement },
       }).catch(() => {});
 
-      expect(ownedIframe.style.width).toBe("");
-      expect(ownedIframe.style.height).toBe("");
+      await expect(first).rejects.toThrow(REPLACED);
+      expect(popup.close).toHaveBeenCalled();
     });
 
-    it("should create an iframe inside the container and remove it on failure", async () => {
-      const createdIframe = {
-        src: "",
-        style: { width: "", height: "" },
-        contentWindow: iframeWin,
-        parentNode: { removeChild: vi.fn() },
-        addEventListener: vi.fn((event: string, handler: () => void) => {
-          if (event === "load") {
-            loadHandler = handler;
-          }
-        }),
-      };
-
-      const container = { appendChild: vi.fn() };
-
-      globalThis.document = {
-        createElement: vi.fn(() => createdIframe),
-      } as unknown as Document;
-
-      const authPromise = FiremittHelper.auth({
+    it("should not cancel the active session when the new options are invalid", async () => {
+      const first = FiremittHelper.auth({
         ...BASE_OPTIONS,
         mode: "iframe",
         iframe: { container: container as unknown as HTMLElement },
       });
 
-      loadHandler!();
-
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const failMsg = Base64helper.encode({ type: EventType.AuthFailed, payload: { error: "container-fail" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: failMsg } as MessageEvent));
-
-      await expect(authPromise).rejects.toBe("container-fail");
-
-      expect(createdIframe.parentNode.removeChild).toHaveBeenCalledWith(createdIframe);
-    });
-
-    it("should ignore a second settle attempt in iframe mode (double-settle guard)", async () => {
-      const authPromise = FiremittHelper.auth({
+      expect(() => FiremittHelper.auth({
         ...BASE_OPTIONS,
         mode: "iframe",
-        iframe: { element: mockIframe as unknown as HTMLIFrameElement },
-      });
-
-      loadHandler!();
-
-      const loadedMsg = Base64helper.encode({ type: EventType.Loaded, payload: {} });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: loadedMsg } as MessageEvent));
-
-      const successMsg = Base64helper.encode({ type: EventType.AuthSucceded, payload: { token: "first-settle" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: successMsg } as MessageEvent));
-
-      const failMsg = Base64helper.encode({ type: EventType.AuthFailed, payload: { error: "late-settle" } });
-
-      messageListeners.forEach(h => h({ isTrusted: true, data: failMsg } as MessageEvent));
-
-      await expect(authPromise).resolves.toBe("first-settle");
-    });
-
-    it("should cancel an active session when a new auth call is made", async () => {
-      const firstIframe = {
-        src: "",
-        style: { width: "", height: "" },
-        contentWindow: iframeWin,
-        parentNode: { removeChild: vi.fn() },
-        addEventListener: vi.fn((event: string, handler: () => void) => {
-          if (event === "load") {
-            loadHandler = handler;
-          }
-        }),
-      };
-
-      const container = { appendChild: vi.fn() };
-
-      globalThis.document = {
-        createElement: vi.fn(() => firstIframe),
-      } as unknown as Document;
-
-      const firstPromise = FiremittHelper.auth({
-        ...BASE_OPTIONS,
-        mode: "iframe",
+        config: { ...BASE_OPTIONS.config, name: "" },
         iframe: { container: container as unknown as HTMLElement },
-      });
+      })).toThrow(InvalidAppNameError);
 
-      const secondIframe = {
-        src: "",
-        style: { width: "", height: "" },
-        contentWindow: iframeWin,
-        parentNode: { removeChild: vi.fn() },
-        addEventListener: vi.fn(),
-      };
+      dispatch(from(created.contentWindow, EventType.AuthSucceded, { token: "kept" }));
 
-      globalThis.document = {
-        createElement: vi.fn(() => secondIframe),
-      } as unknown as Document;
-
-      const secondPromise = FiremittHelper.auth({
-        ...BASE_OPTIONS,
-        mode: "iframe",
-        iframe: { container: container as unknown as HTMLElement },
-      });
-
-      await expect(firstPromise).rejects.toThrow("A new authentication session was started.");
-
-      secondPromise.catch(() => {});
-
-      expect(firstIframe.parentNode.removeChild).toHaveBeenCalledWith(firstIframe);
-    });
-
-    it("should not remove a caller-provided element when cancelling an active session", async () => {
-      const firstIframe = {
-        ...mockIframe,
-        style: { width: "", height: "" },
-        parentNode: { removeChild: vi.fn() },
-      };
-
-      const firstPromise = FiremittHelper.auth({
-        ...BASE_OPTIONS,
-        mode: "iframe",
-        iframe: { element: firstIframe as unknown as HTMLIFrameElement },
-      });
-
-      const secondIframe = {
-        src: "",
-        style: { width: "", height: "" },
-        contentWindow: iframeWin,
-        parentNode: { removeChild: vi.fn() },
-        addEventListener: vi.fn(),
-      };
-
-      const container = { appendChild: vi.fn() };
-
-      globalThis.document = {
-        createElement: vi.fn(() => secondIframe),
-      } as unknown as Document;
-
-      const secondPromise = FiremittHelper.auth({
-        ...BASE_OPTIONS,
-        mode: "iframe",
-        iframe: { container: container as unknown as HTMLElement },
-      });
-
-      await expect(firstPromise).rejects.toThrow("A new authentication session was started.");
-
-      secondPromise.catch(() => {});
-
-      expect(firstIframe.parentNode.removeChild).not.toHaveBeenCalled();
-    });
-
-    it("should not call the load handler after the session has been cancelled", async () => {
-      let capturedLoadHandler: (() => void) | undefined;
-
-      const cancelledIframe = {
-        src: "",
-        style: { width: "", height: "" },
-        contentWindow: iframeWin,
-        parentNode: { removeChild: vi.fn() },
-        addEventListener: vi.fn((event: string, handler: () => void) => {
-          if (event === "load") {
-            capturedLoadHandler = handler;
-          }
-        }),
-      };
-
-      const container = { appendChild: vi.fn() };
-
-      globalThis.document = {
-        createElement: vi.fn(() => cancelledIframe),
-      } as unknown as Document;
-
-      const firstPromise = FiremittHelper.auth({
-        ...BASE_OPTIONS,
-        mode: "iframe",
-        iframe: { container: container as unknown as HTMLElement },
-      });
-
-      const secondIframe = {
-        src: "",
-        style: { width: "", height: "" },
-        contentWindow: iframeWin,
-        parentNode: { removeChild: vi.fn() },
-        addEventListener: vi.fn(),
-      };
-
-      globalThis.document = {
-        createElement: vi.fn(() => secondIframe),
-      } as unknown as Document;
-
-      const secondPromise = FiremittHelper.auth({
-        ...BASE_OPTIONS,
-        mode: "iframe",
-        iframe: { container: container as unknown as HTMLElement },
-      });
-
-      await expect(firstPromise).rejects.toThrow("A new authentication session was started.");
-
-      secondPromise.catch(() => {});
-
-      capturedLoadHandler!();
-
-      expect(iframeWin.postMessage).not.toHaveBeenCalled();
-    });
-
-    it("should reject and clean up when contentWindow is null after load", async () => {
-      const nullWinIframe = {
-        src: "",
-        style: { width: "", height: "" },
-        contentWindow: null,
-        parentNode: { removeChild: vi.fn() },
-        addEventListener: vi.fn((event: string, handler: () => void) => {
-          if (event === "load") {
-            loadHandler = handler;
-          }
-        }),
-      };
-
-      const container = { appendChild: vi.fn() };
-
-      globalThis.document = {
-        createElement: vi.fn(() => nullWinIframe),
-      } as unknown as Document;
-
-      const authPromise = FiremittHelper.auth({
-        ...BASE_OPTIONS,
-        mode: "iframe",
-        iframe: { container: container as unknown as HTMLElement },
-      });
-
-      loadHandler!();
-
-      await expect(authPromise).rejects.toThrow("Could not access the iframe window.");
-
-      expect(nullWinIframe.parentNode.removeChild).toHaveBeenCalledWith(nullWinIframe);
+      await expect(first).resolves.toBe("kept");
     });
   });
 });

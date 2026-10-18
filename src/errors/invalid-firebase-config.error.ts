@@ -5,16 +5,15 @@ import { BaseError } from "./base.error";
 
 
 /**
- * Custom error class representing an error that occurs when Firebase initialization fails
- * due to an invalid configuration.
- * This error is thrown when there is an issue with the provided Firebase configuration.
+ * Custom error class representing an error that occurs when the provided Firebase configuration
+ * is missing or does not pass validation (see {@link FirebaseConfigSchema}).
  *
  * @category Errors
  */
 export class InvalidFirebaseConfigError extends BaseError {
   /**
    * Creates a new instance of the InvalidFirebaseConfigError class with a default error message.
-   * The default error message indicates that Firebase initialization failed due to an invalid configuration.
+   * The default error message indicates that the Firebase configuration is invalid.
    */
   constructor() {
     super(ErrorType.InvalidFirebaseConfig, "Invalid Firebase configuration");

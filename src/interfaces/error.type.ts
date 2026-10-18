@@ -6,8 +6,6 @@ import type { ErrorType } from "..";
  * Custom error type.
  *
  * @category Firemitt
- *
- * @type {IError}
  */
 export interface IError {
 
@@ -25,4 +23,9 @@ export interface IError {
    * The type of error.
    */
   type: ErrorType;
+
+  /**
+   * An optional machine-readable error code (e.g. a Firebase `auth/*` code).
+   */
+  code?: string;
 }

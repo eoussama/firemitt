@@ -1,6 +1,9 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
+    "paths": {
+      "@eoussama/firemitt": ["../src/index.ts"]
+    },
     "types": ["vite/client"]
   },
   "include": ["src"]
